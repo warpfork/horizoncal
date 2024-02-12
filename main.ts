@@ -26,7 +26,7 @@ export default class HorizonCalPlugin extends Plugin {
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('calendar-glyph', 'Open Horizon Calendar', (evt: MouseEvent) => {
 			//new Notice('This is a notice!');
-			this.activateView(evt.shiftKey);
+			this._activateCalendarView(evt.shiftKey);
 		});
 		ribbonIconEl.addClass('my-plugin-ribbon-class');
 
@@ -59,7 +59,10 @@ export default class HorizonCalPlugin extends Plugin {
 	}
 
 	onunload() {
-
+		// One could do this.  But let's not :)
+		// Turns out obsidian puts nice tombstones in place anyway when the plugin goes away.
+		// And in dev iteration, *I don't want these closed* every time I reload.
+		//this.app.workspace.detachLeavesOfType(VIEW_TYPE);
 	}
 
 	async loadSettings() {
@@ -72,7 +75,7 @@ export default class HorizonCalPlugin extends Plugin {
 
 	// All the function names above are magical.
 
-	async activateView(forceNew: boolean) {
+	async _activateCalendarView(forceNew: boolean) {
 		const { workspace } = this.app;
 
 		let leaf: WorkspaceLeaf | null = null;
@@ -80,7 +83,7 @@ export default class HorizonCalPlugin extends Plugin {
 
 		if (forceNew || leaves.length < 1) {
 			// TODO right sidebar is... not what I want.  What's the "main" leaf?
-			leaf = workspace.getRightLeaf(false);
+			leaf = workspace.getLeaf();
 			await leaf.setViewState({ type: VIEW_TYPE, active: true });
 		} else {
 			// A leaf with our view already exists, use that
@@ -148,7 +151,7 @@ export class HorizonCalView extends ItemView {
 	}
 
 	async onClose() {
-		// Nothing to clean up.
+		this.calUI.destroy()
 	}
 
 	_doCal() {
