@@ -4,7 +4,7 @@ import {
 	Setting
 } from 'obsidian';
 
-import { HorizonCalPlugin } from './main';
+import HorizonCalPlugin from './main';
 
 export interface HorizonCalSettings {
 	mySetting: string;
