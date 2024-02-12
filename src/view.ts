@@ -66,6 +66,7 @@ export class HorizonCalView extends ItemView {
 		},
 		{
 			events: function (info, successCallback, failureCallback) {
+				console.log("queried for", info.start, "through", info.end);
 				// .query({
 				// 	start: info.start.valueOf(),
 				// 	end: info.end.valueOf()
@@ -84,12 +85,13 @@ export class HorizonCalView extends ItemView {
 				// 
 				// ... The answer to this is simple.  We just know what the properties are we care about.  That's it.
 
+				dvToHCEvent(pages[0])
+
 				successCallback([
 					{
 						title: 'Event44',
 						start: '2024-02-12'
 					},
-					dvToHCEvent(pages[0]),
 				])
 				return null
 			},
