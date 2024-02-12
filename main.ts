@@ -1,6 +1,7 @@
 import {
 	App,
 	ItemView,
+	Menu,
 	Modal,
 	Plugin, PluginSettingTab, Setting,
 	WorkspaceLeaf
@@ -23,7 +24,7 @@ export default class HorizonCalPlugin extends Plugin {
 		await this.loadSettings();
 
 		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Open Horizon Calendar', (evt: MouseEvent) => {
+		const ribbonIconEl = this.addRibbonIcon('calendar-glyph', 'Open Horizon Calendar', (evt: MouseEvent) => {
 			//new Notice('This is a notice!');
 			this.activateView(evt.shiftKey);
 		});
@@ -97,28 +98,62 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
+var uniq = 1;
+
 export class HorizonCalView extends ItemView {
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
+		this.uniq = uniq++;
 	}
 
 	getViewType() {
 		return VIEW_TYPE;
 	}
-
-	getDisplayText() {
-		return "Horizon Calendar";
+	getIcon(): string {
+		return "calendar-glyph";
 	}
+	getDisplayText() {
+		return "Horizon Calendar " + this.uniq;
+	}
+	public navigation: false; // Don't generally let me click away from this view.
 
-	calUI: Calendar;
+	uniq: number; // Not structural.  Using this for sanitycheck during dev.
+	viewContentEl: Element; // Reference grabbed during onOpen.
+	calUIEl: HTMLElement; // Div created during onOpen to be fullcal's root.
+	calUI: Calendar; // Fullcal's primary control object.
 
 	async onOpen() {
-		const container = this.containerEl.children[1];
-		container.empty();
-		container.createEl("h4", { text: "Horizon Calendar" });
-		const rootNode = container.createEl("div", { cls: "horizoncal" });
+		// The first element in containerEl is obsidian's own header.
+		// The second is the content div you're expected to use for most content.
+		this.viewContentEl = this.containerEl.children[1];
+		this.viewContentEl.empty();
+		this.viewContentEl.createEl("h4", { text: "Horizon Calendar" });
+		this.calUIEl = this.viewContentEl.createEl("div", { cls: "horizoncal" });
+		this._doCal();
+	}
 
-		this.calUI = new Calendar(rootNode, {
+	async onPaneMenu(menu: Menu) {
+		menu.addItem((item) => {
+			item
+				.setTitle("BONK FULLCAL 👈")
+				.setIcon("document")
+				.onClick(async () => {
+					this._doCal();
+				});
+		});
+	}
+
+	async onResize() {
+		this.calUI.render() // `updateSize()` might be enough, but, abundance of caution.
+	}
+
+	async onClose() {
+		// Nothing to clean up.
+	}
+
+	_doCal() {
+		if (this.calUI) this.calUI.destroy();
+		this.calUI = new Calendar(this.calUIEl, {
 			plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
 			initialView: 'timeGridFourDay',
 			headerToolbar: {
@@ -192,16 +227,7 @@ export class HorizonCalView extends ItemView {
 		})
 		this.calUI.render()
 	}
-
-	async onResize(): void {
-		this.calUI.render() // `updateSize()` might be enough, but, abundance of caution.
-	}
-
-	async onClose() {
-		// Nothing to clean up.
-	}
 }
-
 
 class SampleModal extends Modal {
 	constructor(app: App) {
