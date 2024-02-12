@@ -16,6 +16,8 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 
 import { getAPI } from 'obsidian-dataview';
 
+import { dvToHCEvent } from './convert';
+
 export const VIEW_TYPE = "horizoncal-view";
 
 var uniq = 1;
@@ -73,13 +75,21 @@ export class HorizonCalView extends ItemView {
 					.where(p => String(p.file.name).startsWith("evt-"))
 				//.where(p => p.file.day - weekStart >= 0 && p.file.day - weekStart < dvdur("7d")) // how does dv infer this?
 				//.sort((p) => p.file.name, 'asc')
-				console.log(pages[0])
+				console.log(dvToHCEvent(pages[0]))
+
+				// Now, dataview has unfortunately done several very cursed things here.
+				// It's put "file" into the objects, which is... okay, we can just remove that again.
+				// But it's also put a downcased copy of all field names into the object, too.
+				// That's... I don't know how to renormalize that except ask someone else to go parse the damn properties again.
+				// 
+				// ... The answer to this is simple.  We just know what the properties are we care about.  That's it.
 
 				successCallback([
 					{
 						title: 'Event44',
 						start: '2024-02-12'
-					}
+					},
+					dvToHCEvent(pages[0]),
 				])
 				return null
 			},
