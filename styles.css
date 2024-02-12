@@ -1,18 +1,15 @@
 /*
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
+The variables below are those documented and suggested by fullcalendar.
 
 */
 
-:root {
+:root .horizoncal {
 	--fc-small-font-size: .85em;
-	--fc-page-bg-color: #fff;
+	--fc-page-bg-color: rgba(108, 138, 238, 0.6);
 	--fc-neutral-bg-color: rgba(208, 208, 208, 0.3);
 	--fc-neutral-text-color: #808080;
-	--fc-border-color: #ddd;
+	--fc-border-color: rgba(15, 120, 140, 0.1);;
 
 	--fc-button-text-color: #fff;
 	--fc-button-bg-color: #2C3E50;
@@ -34,7 +31,7 @@ If your plugin does not need CSS, delete this file.
 	--fc-event-resizer-dot-total-width: 8px;
 	--fc-event-resizer-dot-border-width: 1px;
 
-	--fc-non-business-color: rgba(165, 165, 165, 0.1);
+	--fc-non-business-color: rgba(165, 165, 165, 0.03);
 	--fc-bg-event-color: rgb(143, 223, 130);
 	--fc-bg-event-opacity: 0.3;
 	--fc-highlight-color: rgba(188, 232, 241, 0.3);

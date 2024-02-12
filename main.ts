@@ -25,7 +25,7 @@ export default class HorizonCalPlugin extends Plugin {
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Open Horizon Calendar', (evt: MouseEvent) => {
 			//new Notice('This is a notice!');
-			this.activateView();
+			this.activateView(evt.shiftKey);
 		});
 		ribbonIconEl.addClass('my-plugin-ribbon-class');
 
@@ -71,21 +71,19 @@ export default class HorizonCalPlugin extends Plugin {
 
 	// All the function names above are magical.
 
-	async activateView() {
+	async activateView(forceNew: boolean) {
 		const { workspace } = this.app;
 
 		let leaf: WorkspaceLeaf | null = null;
 		const leaves = workspace.getLeavesOfType(VIEW_TYPE);
 
-		if (leaves.length > 0) {
-			// A leaf with our view already exists, use that
-			leaf = leaves[0];
-		} else {
-			// Our view could not be found in the workspace, create a new leaf
-			// in the right sidebar for it
-			// TODO this is... not what I want.  What's the "main" leaf?
+		if (forceNew || leaves.length < 1) {
+			// TODO right sidebar is... not what I want.  What's the "main" leaf?
 			leaf = workspace.getRightLeaf(false);
 			await leaf.setViewState({ type: VIEW_TYPE, active: true });
+		} else {
+			// A leaf with our view already exists, use that
+			leaf = leaves[0];
 		}
 
 		// "Reveal" the leaf in case it is in a collapsed sidebar
@@ -112,13 +110,15 @@ export class HorizonCalView extends ItemView {
 		return "Horizon Calendar";
 	}
 
+	calUI: Calendar;
+
 	async onOpen() {
 		const container = this.containerEl.children[1];
 		container.empty();
 		container.createEl("h4", { text: "Horizon Calendar" });
-		const rootNode = container.createEl("div");
+		const rootNode = container.createEl("div", { cls: "horizoncal" });
 
-		var cal = new Calendar(rootNode, {
+		this.calUI = new Calendar(rootNode, {
 			plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
 			initialView: 'timeGridFourDay',
 			headerToolbar: {
@@ -190,7 +190,11 @@ export class HorizonCalView extends ItemView {
 			// https://fullcalendar.io/docs/eventClick is for opening?
 			// i hope it understands doubleclick or... something.
 		})
-		cal.render()
+		this.calUI.render()
+	}
+
+	async onResize(): void {
+		this.calUI.render() // `updateSize()` might be enough, but, abundance of caution.
 	}
 
 	async onClose() {
