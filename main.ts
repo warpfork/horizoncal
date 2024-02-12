@@ -60,8 +60,10 @@ export default class HorizonCalPlugin extends Plugin {
 
 	onunload() {
 		// One could do this.  But let's not :)
-		// Turns out obsidian puts nice tombstones in place anyway when the plugin goes away.
+		// Turns out that because we used `registerView` earlier,
+		// obsidian is clever and already puts nice tombstones in place when the plugin goes away.
 		// And in dev iteration, *I don't want these closed* every time I reload.
+		// ... Oh look, that's even recommended: https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines#Don't+detach+leaves+in+%60onunload%60
 		//this.app.workspace.detachLeavesOfType(VIEW_TYPE);
 	}
 
@@ -95,7 +97,10 @@ export default class HorizonCalPlugin extends Plugin {
 	}
 }
 
-import { Calendar } from '@fullcalendar/core';
+import {
+	Calendar,
+	EventSourceInput,
+} from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
@@ -125,6 +130,44 @@ export class HorizonCalView extends ItemView {
 	calUIEl: HTMLElement; // Div created during onOpen to be fullcal's root.
 	calUI: Calendar; // Fullcal's primary control object.
 
+	eventSources: EventSourceInput[] = [
+		{
+			events: [
+				{
+					title: 'Event1',
+					start: '2024-02-12'
+				},
+				{
+					title: 'Event2',
+					start: '2024-02-12T12:30:00',
+					end: '2024-02-12T13:30:00'
+					// 'background' property is neat.
+				}
+			],
+			color: 'yellow',   // an option!
+			textColor: 'black', // an option!
+
+			startEditable: true,
+			durationEditable: true,
+		},
+		{
+			events: function (info, successCallback, failureCallback) {
+				// .query({
+				// 	start: info.start.valueOf(),
+				// 	end: info.end.valueOf()
+				// })
+				successCallback([
+					{
+						title: 'Event44',
+						start: '2024-02-12'
+					}
+				])
+				return null
+			},
+			color: '#146792',
+		},
+	]
+
 	async onOpen() {
 		// The first element in containerEl is obsidian's own header.
 		// The second is the content div you're expected to use for most content.
@@ -151,7 +194,7 @@ export class HorizonCalView extends ItemView {
 	}
 
 	async onClose() {
-		this.calUI.destroy()
+		if (this.calUI) this.calUI.destroy()
 	}
 
 	_doCal() {
@@ -182,27 +225,7 @@ export class HorizonCalView extends ItemView {
 			// the 'scrollToTime' method might also be the right thing.
 			scrollTimeReset: false,
 			height: "auto",
-			eventSources: [
-				{
-					events: [
-						{
-							title: 'Event1',
-							start: '2024-02-12'
-						},
-						{
-							title: 'Event2',
-							start: '2024-02-12T12:30:00',
-							end: '2024-02-12T13:30:00'
-							// 'background' property is neat.
-						}
-					],
-					color: 'yellow',   // an option!
-					textColor: 'black', // an option!
-
-					startEditable: true,
-					durationEditable: true,
-				}
-			],
+			eventSources: this.eventSources,
 			businessHours: {
 				daysOfWeek: [1, 2, 3, 4, 5],
 				startTime: '09:00',
