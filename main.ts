@@ -73,83 +73,131 @@ export default class HorizonCalPlugin extends Plugin {
 
 	async activateView() {
 		const { workspace } = this.app;
-	  
+
 		let leaf: WorkspaceLeaf | null = null;
 		const leaves = workspace.getLeavesOfType(VIEW_TYPE);
-	  
+
 		if (leaves.length > 0) {
-		  // A leaf with our view already exists, use that
-		  leaf = leaves[0];
+			// A leaf with our view already exists, use that
+			leaf = leaves[0];
 		} else {
-		  // Our view could not be found in the workspace, create a new leaf
-		  // in the right sidebar for it
-		  // TODO this is... not what I want.  What's the "main" leaf?
-		  leaf = workspace.getRightLeaf(false);
-		  await leaf.setViewState({ type: VIEW_TYPE, active: true });
+			// Our view could not be found in the workspace, create a new leaf
+			// in the right sidebar for it
+			// TODO this is... not what I want.  What's the "main" leaf?
+			leaf = workspace.getRightLeaf(false);
+			await leaf.setViewState({ type: VIEW_TYPE, active: true });
 		}
-	  
+
 		// "Reveal" the leaf in case it is in a collapsed sidebar
 		workspace.revealLeaf(leaf);
-	    }
+	}
 }
+
+import { Calendar } from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
+import timeGridPlugin from '@fullcalendar/timegrid';
 
 export class HorizonCalView extends ItemView {
 	constructor(leaf: WorkspaceLeaf) {
-	  super(leaf);
+		super(leaf);
 	}
-    
-	getViewType() {
-	  return VIEW_TYPE;
-	}
-    
-	getDisplayText() {
-	  return "This is the hovertext on the icon.";
-	}
-    
-	async onOpen() {
-	  const container = this.containerEl.children[1];
-	  container.empty();
-	  container.createEl("h4", { text: "Example view" });
-	  const {FullCalendar} = customJS;
-	  container.createEl("span", { text: "lol"+FullCalendar });
-	  const rootNode = container.createEl("div");
 
-	  var fc = FullCalendar.bonk()
-	  var cal = new fc.Calendar(rootNode, {
-		  //plugins: [fc.timegrid], // not when vendorstyle apparently.
-		  initialView: 'timeGridFourDay',
-		  views: {
-			  timeGridFourDay: {
-				  type: 'timeGrid',
-				  duration: { days: 12 }
-			  },
-		  },
-		  eventSources: [
-			  {
-				  events: [
-					  {
-						  title: 'Event1',
-						  start: '2024-02-11'
-					  },
-					  {
-						  title: 'Event2',
-						  start: '2024-02-11T12:30:00',
-						  end: '2024-02-11T13:30:00'
-					  }
-				  ],
-				  color: 'yellow',   // an option!
-				  textColor: 'black' // an option!
-			  }
-		  ],
-	  })
-	  cal.render()
+	getViewType() {
+		return VIEW_TYPE;
 	}
-    
+
+	getDisplayText() {
+		return "Horizon Calendar";
+	}
+
+	async onOpen() {
+		const container = this.containerEl.children[1];
+		container.empty();
+		container.createEl("h4", { text: "Horizon Calendar" });
+		const rootNode = container.createEl("div");
+
+		var cal = new Calendar(rootNode, {
+			plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
+			initialView: 'timeGridFourDay',
+			headerToolbar: {
+				right: 'prev,next today',
+				// future work: additional nav buttons of our own that manage via 'gotoDate' and 'visibleRange'.
+				center: 'dayGridMonth,timeGridWeek,timeGridFourDay,timeGrid14Day,listWeek',
+				left: 'title',
+			},
+			views: {
+				timeGridFourDay: {
+					type: 'timeGrid',
+					duration: { days: 4 },
+					dateIncrement: { days: 1 },
+				},
+				timeGrid14Day: {
+					type: 'timeGrid',
+					duration: { days: 14 },
+					dateIncrement: { days: 1 },
+				},
+			},
+			nowIndicator: true,
+			// scrollTime: // probably ought to be set so "now" is in it, yo...
+			// the 'scrollToTime' method might also be the right thing.
+			scrollTimeReset: false,
+			height: "auto",
+			eventSources: [
+				{
+					events: [
+						{
+							title: 'Event1',
+							start: '2024-02-12'
+						},
+						{
+							title: 'Event2',
+							start: '2024-02-12T12:30:00',
+							end: '2024-02-12T13:30:00'
+							// 'background' property is neat.
+						}
+					],
+					color: 'yellow',   // an option!
+					textColor: 'black', // an option!
+
+					startEditable: true,
+					durationEditable: true,
+				}
+			],
+			businessHours: {
+				daysOfWeek: [1, 2, 3, 4, 5],
+				startTime: '09:00',
+				endTime: '23:00',
+			},
+			slotLabelInterval: '1:00',
+			slotDuration: '00:30:00',
+			snapDuration: '00:15:00',
+			// slotLabelFormat: // actually, leaving this unset, because am/pm here is okay... since we use 24hr in the event labels.
+			eventTimeFormat: { // like '14:30:00'
+				hour: '2-digit',
+				minute: '2-digit',
+				omitZeroMinute: true,
+				hour12: false
+			},
+
+			// Dragging?  Spicy.
+			editable: true,
+			// todo: https://fullcalendar.io/docs/eventDrop is 99% of it.
+			// and then https://fullcalendar.io/docs/eventResize is the second 99%.
+			// okay, creating new events by clicking empty space might also need another hook.
+
+			// https://fullcalendar.io/docs/eventClick is for opening?
+			// i hope it understands doubleclick or... something.
+		})
+		cal.render()
+	}
+
 	async onClose() {
-	  // Nothing to clean up.
+		// Nothing to clean up.
 	}
-    }
-    
+}
+
 
 class SampleModal extends Modal {
 	constructor(app: App) {
@@ -157,12 +205,12 @@ class SampleModal extends Modal {
 	}
 
 	onOpen() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.setText('Woah!  Really.');
 	}
 
 	onClose() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.empty();
 	}
 }
@@ -176,7 +224,7 @@ class HorizonCalSettingsTabMain extends PluginSettingTab {
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
 
