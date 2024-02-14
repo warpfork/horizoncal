@@ -118,6 +118,12 @@ export class HorizonCalView extends ItemView {
 					{
 						start: DateTime.fromISO("2024-02-15T09:25:04", {zone: "America/Los_Angeles"}).toISO() as DateInput,
 					},
+					{
+						start: new Date("2024-02-15T09:45:04"),
+					},
+					{
+						start: "2024-02-15T09:46:04 America/Los_Angeles", // nope, that doesn't even get parsed.
+					},
 					// pages.array()
 				])
 				return null
