@@ -15,7 +15,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
-import luxonPlugin from '@fullcalendar/luxon3';
+import luxonPlugin, { toLuxonDuration } from '@fullcalendar/luxon3';
 
 import { getAPI } from 'obsidian-dataview';
 
@@ -177,7 +177,7 @@ export class HorizonCalView extends ItemView {
 
 	_doCal() {
 		if (this.calUI) this.calUI.destroy();
-		this.calUI = new Calendar(this.calUIEl, {
+		let calUI = new Calendar(this.calUIEl, {
 			plugins: [
 				// View plugins
 				dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin,
@@ -241,12 +241,13 @@ export class HorizonCalView extends ItemView {
 			},
 			eventResize: function (info) {
 				// Similar to the drop events.
-				console.log(info.event.title, " was resized by ", info.startDelta, " and ", info.endDelta);
+				console.log(info.event.title, " was resized by ", toLuxonDuration(info.startDelta, calUI).toHuman(), " and ", toLuxonDuration(info.endDelta, calUI).toHuman());
 			},
 
 			// https://fullcalendar.io/docs/eventClick is for opening?
 			// i hope it understands doubleclick or... something.
 		})
+		this.calUI = calUI
 		this.calUI.render()
 		// console.log("okay here's the calendar's event view!", this.calUI.getEvents())
 		// console.log("did our TZs roundtrip?", this.calUI.getEvents().map(evt => evt.start))
