@@ -7,6 +7,8 @@ import {
 
 import {
 	Calendar,
+	DateInput,
+	EventInput,
 	EventSourceInput,
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -14,8 +16,12 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
+import luxonPlugin, { toLuxonDateTime } from '@fullcalendar/luxon3';
+
 import { getAPI } from 'obsidian-dataview';
 
+
+import { DateTime } from 'luxon';
 
 export const VIEW_TYPE = "horizoncal-view";
 
@@ -98,23 +104,22 @@ export class HorizonCalView extends ItemView {
 				//.sort((p) => p.file.name, 'asc')
 				console.log("dv shows this:", pages[0])
 
-				// TODO emit a warning for things with no TZ?  or instantly fixate it?
-				// Korganizer just shamelessly did everything in Zulu and ... I don't love it for that but also never honestly noticed.
-				// Thing is, I *like* my convention of "i'm just rendering everything as local to the timezone i'll be in at the time".
-				// Scrolling across years of data and the "working hours" stay in the middle of the screen is fucking great.
-				// The trouble is that it objectively loses information.
-				// Can I have fullcalendar render different days with different prevailing TZs?
-				// Can I have it switch TZ midday?  Probably not lol, because what even.
-				// The only reason that defacto was a nonissue for me was that flights were always still slightly longer than the timeshift.
-				// The most egregious possible way to hack this together is render two calendars and one day gets shown twice with partial content (and then render a dummy background event to say "whoopsie"; and good luck with things that cross the line.).
-				// Another option is just to add extra buttons and prompts that let you switch view mode fast when you scroll onto days that have other TZs.
-				// This could be combined with background events that make rendered warnings about TZ shifts.  Maybe.  (Tricky to infer where that should be drawn exactly.)
-				// (I'm thinking also about the business hours built in feature being a bit comical here.)
-				// Not sure that having events with other TZs is actually the cue to use.  That happens for meetings on shared calendars all the time.
-				// A custom event that's a marker for "shift my view please" is probably actually totally reasonable though!
-				// Maybe these should have Special filename patterns so we can pluck them out at great range.  It's something I'd wanna base a lot on, for months at a time.
+				let fuck : EventInput[] = []
 
-				successCallback(pages.array())
+				successCallback([
+					{
+						start: DateTime.utc(2024, 2, 15, 9, 10, 23).toISO() as DateInput,
+						timeZone: "Europe/Berlin",
+					},
+					{
+						start: DateTime.utc(2024, 2, 15, 9, 10, 42).toISO() as DateInput,
+						timeZone: "America/Los_Angeles", // ... this doesn't raise a type error but also empirically doesn't have any effect.
+					},
+					{
+						start: DateTime.fromISO("2024-02-15T09:25:04", {zone: "America/Los_Angeles"}).toISO() as DateInput,
+					},
+					// pages.array()
+				])
 				return null
 			},
 			color: '#146792',
@@ -153,7 +158,12 @@ export class HorizonCalView extends ItemView {
 	_doCal() {
 		if (this.calUI) this.calUI.destroy();
 		this.calUI = new Calendar(this.calUIEl, {
-			plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
+			plugins: [
+				// View plugins
+				dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin,
+				// System glue plugins
+				luxonPlugin,
+			],
 			initialView: 'timeGridFourDay',
 			headerToolbar: {
 				right: 'prev,next today',
@@ -205,5 +215,10 @@ export class HorizonCalView extends ItemView {
 			// i hope it understands doubleclick or... something.
 		})
 		this.calUI.render()
+		console.log("okay here's the calendar's event view!", this.calUI.getEvents())
+		console.log("did our TZs roundtrip?", this.calUI.getEvents().map(evt => evt.start))
+		// No, no they did not. `.getTimezoneOffset()` gives a number in minutes, and it's alll the local ones.
+		console.log("howbout wat luxonifier?", this.calUI.getEvents().map(evt => toLuxonDateTime(evt.start as Date, this.calUI)))
+		// NOPE, they're all `_zone: SystemZone` now.  Goddamnit.
 	}
 }
