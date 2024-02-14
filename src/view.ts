@@ -230,6 +230,19 @@ export class HorizonCalView extends ItemView {
 			// and then https://fullcalendar.io/docs/eventResize is the second 99%.
 			// okay, creating new events by clicking empty space might also need another hook.
 
+			eventDrop: function (info) {
+				// `info.event` -- the new event
+				// `info.oldEvent` -- you guessed it
+				// `info.delta` -- an object, but an odd one.  It does integer year/month/days, but all finer information in... milliseconds, lmao.  Okay.
+				// And again, note that FC already turned ALL timezones into not just fixed offsets, but a single uniform one for the whole calendar and all events.
+				// So that was a very lossy change compared to our user's original input data, and should be considered before displaying anything.
+				console.log(info.event.title, " was shifted by ", info.delta, " -- new date: ", [info.event.start], "old date:", [info.oldEvent.start]);
+			},
+			eventResize: function (info) {
+				// Similar to the drop events.
+				console.log(info.event.title, " was resized by ", info.startDelta, " and ", info.endDelta);
+			},
+
 			// https://fullcalendar.io/docs/eventClick is for opening?
 			// i hope it understands doubleclick or... something.
 		})
