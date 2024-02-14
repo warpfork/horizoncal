@@ -7,21 +7,21 @@ import {
 
 import {
 	Calendar,
-	DateInput,
 	EventInput,
-	EventSourceInput,
+	EventSourceInput
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
-import luxonPlugin, { toLuxonDateTime } from '@fullcalendar/luxon3';
+import luxonPlugin from '@fullcalendar/luxon3';
 
 import { getAPI } from 'obsidian-dataview';
 
-
 import { DateTime } from 'luxon';
+
+import { HCEventFrontmatterSchema } from './data';
 
 export const VIEW_TYPE = "horizoncal-view";
 
@@ -71,7 +71,7 @@ export class HorizonCalView extends ItemView {
 		},
 		{
 			events: function (info, successCallback, failureCallback) {
-				console.log("queried for", info.start, "through", info.end);
+				//console.log("---- queried for", info.start, "through", info.end);
 				// .query({
 				// 	start: info.start.valueOf(),
 				// 	end: info.end.valueOf()
@@ -96,36 +96,49 @@ export class HorizonCalView extends ItemView {
 				// The way to safely ignore all this is to peep `.file.frontmatter`.  That has the originals.
 				// And I think someday we might have a compelling argument for making our own simpler query system that does _less_.
 				// (Or find some flags to DV that ask it to Do Less; that'd be great.)
-				//
+				// 
 				const dv = getAPI();
 				const pages = dv.pages('"sys/horizoncal"')
 					.where(p => String(p.file.name).startsWith("evt-"))
-				//.where(p => p.file.day - weekStart >= 0 && p.file.day - weekStart < dvdur("7d")) // how does dv infer this?
-				//.sort((p) => p.file.name, 'asc')
-				console.log("dv shows this:", pages[0])
 
-				let fuck : EventInput[] = []
+				let results: EventInput[] = []
+				for (let i in pages.array()) {
+					// We're gonna read the frontmatter because it's least wild.
+					//console.log("plz", pages[i]) 
+					let evtFmRaw = pages[i].file.frontmatter
 
-				successCallback([
-					{
-						start: DateTime.utc(2024, 2, 15, 9, 10, 23).toISO() as DateInput,
-						timeZone: "Europe/Berlin",
-					},
-					{
-						start: DateTime.utc(2024, 2, 15, 9, 10, 42).toISO() as DateInput,
-						timeZone: "America/Los_Angeles", // ... this doesn't raise a type error but also empirically doesn't have any effect.
-					},
-					{
-						start: DateTime.fromISO("2024-02-15T09:25:04", {zone: "America/Los_Angeles"}).toISO() as DateInput,
-					},
-					{
-						start: new Date("2024-02-15T09:45:04"),
-					},
-					{
-						start: "2024-02-15T09:46:04 America/Los_Angeles", // nope, that doesn't even get parsed.
-					},
-					// pages.array()
-				])
+					// Quick check first.
+					if (!evtFmRaw["evtDate"]) {
+						// TODO use filemanager.processFrontMatter to write an "hcerror" field with message.
+						continue
+					}
+
+					// Use Zod to do a lot more validation.
+					const evtFmValidation = HCEventFrontmatterSchema.safeParse(evtFmRaw);
+					if (!evtFmValidation.success) {
+						// TODO use filemanager.processFrontMatter to write an "hcerror" field with message.
+						console.log("conversion error:", evtFmValidation.error);
+						continue
+					}
+					let evtFm = evtFmValidation.data;
+					// console.log("evtFm ->", evtFm);
+
+					// Turn our three-part time+date+timezone info into a single string we'll pass to FullCalendar.
+					// This is going to *lose precision* -- FC can't actually usefully handle the TZ info.
+					// (We'll diligently re-attach and persist TZ data every time we get any info back from FC.)
+					let startDt = DateTime.fromObject({ ...evtFm.evtDate, ...evtFm.evtTime }, { zone: evtFm.evtTZ });
+					let endDt = DateTime.fromObject({ ... (evtFm.endDate || evtFm.evtDate), ...evtFm.endTime }, { zone: evtFm.endTZ || evtFm.evtTZ });
+
+					results.push({
+						title: evtFm.title,
+						start: startDt.toISO() as string,
+						end: endDt.toISO() as string,
+					})
+					//console.log("and that made?  this:", results.last())
+				}
+
+				successCallback(results)
+				//console.log("---- query journey ended")
 				return null
 			},
 			color: '#146792',
@@ -221,10 +234,10 @@ export class HorizonCalView extends ItemView {
 			// i hope it understands doubleclick or... something.
 		})
 		this.calUI.render()
-		console.log("okay here's the calendar's event view!", this.calUI.getEvents())
-		console.log("did our TZs roundtrip?", this.calUI.getEvents().map(evt => evt.start))
+		// console.log("okay here's the calendar's event view!", this.calUI.getEvents())
+		// console.log("did our TZs roundtrip?", this.calUI.getEvents().map(evt => evt.start))
 		// No, no they did not. `.getTimezoneOffset()` gives a number in minutes, and it's alll the local ones.
-		console.log("howbout wat luxonifier?", this.calUI.getEvents().map(evt => toLuxonDateTime(evt.start as Date, this.calUI)))
+		// console.log("howbout wat luxonifier?", this.calUI.getEvents().map(evt => toLuxonDateTime(evt.start as Date, this.calUI)))
 		// NOPE, they're all `_zone: SystemZone` now.  Goddamnit.
 	}
 }

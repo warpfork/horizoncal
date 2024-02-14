@@ -102,3 +102,7 @@ That's a human policy decision, and it may change!)
 ((REVIEW: I'm not actually sure this is sanely justifiable.  Yes, the TZDB changes.  But other humans are pretty good at making sure it doesn't change retroactively.  Worst case?  Some events get mapped to different unix epoch timestamps?  _oh no_.  This is a calendar for humans, not for log event linearization -- if that happens, _it's probably right_.)
 
 You can read more about how exactly these are stored in your event data files in the [HACKME document](hack/HACKME.md).
+
+### What if I create events without timezones?
+
+HorizonCal will add the current prevailing timezone as soon as it has any encounter at all with that event file.
