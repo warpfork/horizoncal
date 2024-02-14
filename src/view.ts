@@ -128,6 +128,7 @@ export class HorizonCalView extends ItemView {
 					// (We'll diligently re-attach and persist TZ data every time we get any info back from FC.)
 					let startDt = DateTime.fromObject({ ...evtFm.evtDate, ...evtFm.evtTime }, { zone: evtFm.evtTZ });
 					let endDt = DateTime.fromObject({ ... (evtFm.endDate || evtFm.evtDate), ...evtFm.endTime }, { zone: evtFm.endTZ || evtFm.evtTZ });
+					// TODO we do need to validate the zones were accepted here.  (Everything else should already be covered.)
 
 					results.push({
 						title: evtFm.title,

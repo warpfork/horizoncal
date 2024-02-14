@@ -9,10 +9,20 @@ import { DateTime, Duration } from 'luxon';
 // ... it's fine matching the object rules on luxon's types, which is interesting.
 // it also removes the additional code and data, which I guess makes sense.
 
-const YMDSchema = z.string().transform(parseYMD).pipe(z.object({
+const YMDSchema = z.string().transform((val, ctx) => {
+	let parsed = parseYMD(val)
+	if ("error" in parsed) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.invalid_date,
+			message: parsed.error.message,
+		});
+		return z.NEVER;
+	}
+	return parsed;
+}).pipe(z.object({  // These are functionally already validate by the transform!  But it still has the effect of allow-listing the values.
 	year: z.number().int().gte(1000).lte(9999),
 	month: z.number().int().gte(1).lte(12),
-	day: z.number().int().gte(1).lte(31), // forgive me.
+	day: z.number().int().gte(1).lte(31),
 })).brand("YMD")
 
 const HoursMinutesSchema = z.string().transform(parseTime).pipe(z.object({
@@ -43,10 +53,10 @@ export type HCEventFrontmatter = z.infer<typeof HCEventFrontmatterSchema>;
 /*-----------------------------------------*/
 /* And now for somewhat more cursed stuff. */
 
-function parseYMD(ymd: string): { year: number, month: number, day: number } | Error {
+function parseYMD(ymd: string): { year: number, month: number, day: number } | { error: Error } {
 	let parsed = DateTime.fromFormat(ymd, "yyyy-MM-dd");
 	if (parsed.invalidReason) {
-		return Error(parsed.invalidReason)
+		return { error: Error(parsed.invalidReason + ": " + parsed.invalidExplanation as string) }
 	}
 	//return {year: parsed.year, month: parsed.month, day: parsed.day}
 	return parsed
