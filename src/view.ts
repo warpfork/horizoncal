@@ -70,24 +70,49 @@ export class HorizonCalView extends ItemView {
 				// 	start: info.start.valueOf(),
 				// 	end: info.end.valueOf()
 				// })
+
+				// So about Dataview.
+				//
+				// Dataview does a lot.  Some of it helpful, some of it... imo, kind of a waste of time.
+				// The helpful parts are so numerous they don't bear listing.
+				// The less helpful parts:
+				//   - Every field in the frontmatter that's got capital letters?  It gets cloned to a downcased one.
+				//      -> this makes it confusing to range over the set because it's got duplicates!
+				//      -> it's also a waste of memory!  Big sigh.
+				//   - Anything that looks like a date got parsed to a Luxon DateTime object already!
+				//      -> cool for the purpose of dv queries themselves...
+				//      -> it's a little wasteful for our purposes, because we're just gonna turn around and integrate with another API that doesn't use that format.
+				//      -> and when I said "date"?  I mean with YYYY-MM-DD.  It doesn't detect or do anything with HH:MM.
+				//   - DV has gathered outlinks, inlinks, tasks, lists...
+				//      -> the latter two don't really matter much in practice (event file contents are pretty short), but it's unnecessary work.
+				//      -> inlinks required DV to index and parse *how much??* of my vault?  Very unnecessary work.
+				//
+				// The way to safely ignore all this is to peep `.file.frontmatter`.  That has the originals.
+				// And I think someday we might have a compelling argument for making our own simpler query system that does _less_.
+				// (Or find some flags to DV that ask it to Do Less; that'd be great.)
+				//
 				const dv = getAPI();
 				const pages = dv.pages('"sys/horizoncal"')
 					.where(p => String(p.file.name).startsWith("evt-"))
 				//.where(p => p.file.day - weekStart >= 0 && p.file.day - weekStart < dvdur("7d")) // how does dv infer this?
 				//.sort((p) => p.file.name, 'asc')
+				console.log("dv shows this:", pages[0])
 
-				// Now, dataview has wrung around our data quite a bit already.
-				// - The 'date' field has already been parsed into a Luxon DateTime.
-				// - The 'startTime' and 'endTime' fields are still strings, though -- unchanged.
-				// - And all the properties with any capital letters in them have a downcased copy, lol.
-				//
-				// So in order to handle this with the least faff:
-				// - We're gonna just shrug and roll with the automatic DateTime thing (what else can we do?).
-				// - We're only ever going to transform these things on the fly.
-				//    The filesystem is one source of truth.
-				//    The fullcal library necessarily holds another.
-				//    I'm not adding a third.  That helps no one.
-
+				// TODO emit a warning for things with no TZ?  or instantly fixate it?
+				// Korganizer just shamelessly did everything in Zulu and ... I don't love it for that but also never honestly noticed.
+				// Thing is, I *like* my convention of "i'm just rendering everything as local to the timezone i'll be in at the time".
+				// Scrolling across years of data and the "working hours" stay in the middle of the screen is fucking great.
+				// The trouble is that it objectively loses information.
+				// Can I have fullcalendar render different days with different prevailing TZs?
+				// Can I have it switch TZ midday?  Probably not lol, because what even.
+				// The only reason that defacto was a nonissue for me was that flights were always still slightly longer than the timeshift.
+				// The most egregious possible way to hack this together is render two calendars and one day gets shown twice with partial content (and then render a dummy background event to say "whoopsie"; and good luck with things that cross the line.).
+				// Another option is just to add extra buttons and prompts that let you switch view mode fast when you scroll onto days that have other TZs.
+				// This could be combined with background events that make rendered warnings about TZ shifts.  Maybe.  (Tricky to infer where that should be drawn exactly.)
+				// (I'm thinking also about the business hours built in feature being a bit comical here.)
+				// Not sure that having events with other TZs is actually the cue to use.  That happens for meetings on shared calendars all the time.
+				// A custom event that's a marker for "shift my view please" is probably actually totally reasonable though!
+				// Maybe these should have Special filename patterns so we can pluck them out at great range.  It's something I'd wanna base a lot on, for months at a time.
 
 				successCallback(pages.array())
 				return null

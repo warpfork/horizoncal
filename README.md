@@ -1,96 +1,104 @@
-# Obsidian Sample Plugin
+HorizonCal -- a Calendar and Event plugin for Obsidian
+======================================================
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+HorizonCal is an calendar application that stores data in an Obsidian-native way --
+plain files!  Syncing naturally with the rest of your Obsidian repo --
+and offers a rich and editable view (powered by the venerable FullCalendar library).
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+Features include:
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+- the basics you expect from a calendar -- month views, daily and weekly time grid views, etc.
+- adjustable timegrid sizes!  Want to look forward at an hourly scale for two weeks?  Can do!
+- attach rich notes to any event -- they're all just Obsidian notes, after all!
+- quick add events with a modal form -- trigger this as a command from anywhere to add new events rapidly.
+- drag-and-drop edit of event times!
+- easy query from other plugins -- all data is in frontmatter, so using Dataview, etc, is easy!
+  - (future plan: `hc` should expose a `.dvevents(start,end)` helper that returns a DV DataArray with all the pathing pre-handled for your convenience.)
+- rich support for timezones!  Create special events to tell the calendar when your personal timezone is changing, so the calendar can automatically adapt views and new event creation to seamlessly project events in to _your contextually relevant time_ for _you_ -- even when you look forward or backward over timezone changes.  (Yeah, I travel a lot.  How could you tell? :))
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
 
-## First time developing plugins?
+Data Format
+-----------
 
-Quick starting guide for new plugin devs:
+HorizonCal uses one file per event, and Obsidian frontmatter to store almost all data.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+The file layout is roughly "`{hc_dir}/{YYYY}/{MM}/evt-{YYYY}-{MM}-{DD}-{evt_title}-{uid}`".
 
-## Releasing new releases
+(Files are renamed when the event date or title changes.)
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+There are a couple additional files that use a slightly different convention.
+For example, some filenames start with "`tzch-`" instead of "`evt-`" -- these are timezone change events.
+(We give these different name patterns because we usually need to load them from wider ranges of dates.)
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
 
-## Adding your plugin to the community plugin list
+### HorizonCal's format is opiniated
 
-- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+HorizonCal has chosen to have one specific format of its own for event storage.
+(This is admittedly in contrast to a lot of Obsidian plugins, which are a bit "have it your way".)
+HorizonCal made specific choices about both the filesystem layout, and the property names and their formats that are used in each event file.
 
-## How to use
+There's a couple of reasons that drove the choices we made:
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+- HorizonCal is meant to be editable by drag-and-drop!  This weighed heavily in favor of a file-per-event approach, because our intent to be able to edit the data a _lot_, programmatically, means it might as well be in a machine-friendly format (and especially, not embedded in the middle of your other human-written freetext, which would be harder to preserve cleanly... especially if we move events between whole days).
+- HorizonCal cares about being _Fast_, even with large numbers of events over large spans of time.  This also weighted heavily in favor of a file-er-event approach, because being fast means means we need to lay things out in a way that's easy for us to index over.  (For example, we use certain filename conventions to quickly mark files with data that needs to be read across large timespans (like your timezone shift events!  A thing we support, by the way!) so they can be found quickly without parsing every other event in your repo to discover them.)  A file-per-event also means we're not stuck parsing through the rest of your daily notes file contents while looking for the subset of data that's relevant to us.
+- HorizonCal cares about working with large numbers of events.  This means we insist on using directories to organize years and months.  (You don't want to end up with a directory with 20,000 entries in it that lags the UI if you accidentally open it in a folder nav tree, do you?)
+- Consistency is good for everyone!  It would be delightful if all HorizonCal users can also share their own dataview query snippets, and having a basic agreement on the file layout conventions makes them work reliably (and efficiently) for everyone, without the need to tweak.
+- HorizonCal keeps dates, times in the day, and timezone data each in their own fields in each file.  We chose this approach based on a study of how Obsdian's native properties editor interacts with these fields.  We want the approach that derives the most value from Obsidian's built-in property editor, while also being the least likely to experience accidental data loss where Obsidian's property editor rounds some corners.  (Timezones, especially, do not survive in Obsidian's "Date & Time" property, and so forced separate fields.)  This does result in quite a few properties, but stability and clarity is worth it.
 
-## Manually installing the plugin
+In short: We chose a format and a file layout pattern that we think supports clarity, large scale usage, and consistent organization well,
+and we think that's a good choice to make upfront on behalf of our users.
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+You can read more about some of the exact details of choices in the [HACKME document](hack/HACKME.md).
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
 
-## Funding URL
+### Filename and Date handling errata
 
-You can include funding URLs where people who use your plugin can financially support it.
+The date fields used: are the event's _start_ date... as the date would be for the timezone of the start event.
+(Yes, this does mean changing the timezone of an event could cause it to be renamed!  But I find overall this generally "DWIM".  Using UTC dates would be significantly more confusing in practice.)
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+If you're writing your own queries against HorizonCal events: you probably want to include a range of folders one day _wider_ than your actual target, so that you can gather and parse any 
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
 
-If you have multiple URLs, you can also do:
+Timezones
+---------
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+HorizonCal puts a lot of effort into supporting timezones in a complete but humane way.
 
-## API Documentation
+Instead of assuming the system timezone is always relevant, and _only_ letting you switch your _current_ view,
+HorizonCal lets you _specify when you'll switch timezones_.
 
-See https://github.com/obsidianmd/obsidian-api
+If you're a frequent traveller, you'll immediately understand why this is important :)
+
+Since HorizonCal lets you _tell_ your calendar when your timezone changes...
+
+- when you create new events that are after a timezone shift, you can create them in the "local" time _considering that shift_, and HorizonCal with do the right thing.
+- when you scroll back across previous dates, HorizonCal will prompt you to switch to the relevant time that was local to you _then_ -- so even if you're in a different place and timezone now, the view for those dates is _what made sense on those dates_.
+
+Otherwise, things are pretty standard:
+
+- All events have a timezone stored.
+- You can edit this manually, if you want (you'll have to dive into the Obsidian frontmatter manually to do this, though).
+- You can have events with distinct start and end timezones!
+- When editing events by drag-n-drop in the calendar view, whatever the timezones were, is retained.
+
+We hope this behavior pleases :)  Timezones are definitely hard to handle well, but we hope this hits close to the mark.
+
+### Named timezones, or +offset timezones?
+
+HorizonCal uses _both_.
+
+- Users (typically) specify named timezones.
+- Events store the offset form as well, for stability.
+- HorizonCal generates the offset form and updates it when events are moved.
+
+The main reason to do things this way is to interact correctly with changes like Daylight Savings Time transitions.
+This requires named timezones.  (The timezone "Europe/Berlin" transitions between "CET" and "CEST" over course of the year!)
+
+At the same time, we store offset literals, because they're clearer and more stable.
+Name timezones have one major drawback: they're more complex because they have to be _resolved_ into an offset,
+and those definitions can change over time!
+(This year, "Europe/Berlin" has those daylight savings time transitions -- will it next year?  Who knows!
+That's a human policy decision, and it may change!)
+((REVIEW: I'm not actually sure this is sanely justifiable.  Yes, the TZDB changes.  But other humans are pretty good at making sure it doesn't change retroactively.  Worst case?  Some events get mapped to different unix epoch timestamps?  _oh no_.  This is a calendar for humans, not for log event linearization -- if that happens, _it's probably right_.)
+
+You can read more about how exactly these are stored in your event data files in the [HACKME document](hack/HACKME.md).

@@ -67,3 +67,6 @@ export default class HorizonCalPlugin extends Plugin {
 		workspace.revealLeaf(leaf);
 	}
 }
+
+// wishlist: also add an editor integration that adds some extra rendering to event files,
+// which visualizes things like whether the event's TZ is in your prevailing TZ or a different one, etc.
