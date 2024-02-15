@@ -104,6 +104,24 @@ export class HorizonCalView extends ItemView {
 				type DVT_Record = Record<string, Literal> & {file: TFile};
 				const dv = getAPI();
 				const pages = dv.pages('"sys/horizoncal"')
+					// TODO need this to be as un-eager as possible.
+					// I think `.pages` is already gonna load and parse all those, so... no, bad.
+					// "Dataview indexes its sources internally" states their docs, but I'm going to hope it doesn't do so proactively either.
+					//
+					// might be strongest to make our own func that starts teh DataArray chaining,
+					// because this startsWith being *after* we're all the way in DataArray land?  yeah, not efficient.
+					// We need to be able to pluck files with certain prefixes out of 10000 files without loading and indexing them all.
+					// ...
+					// increasingly, I think maybe we just... don't need or derive much value from DV at all.
+					// I'm already not using any of their loading nor swizzling.
+					// Letting DV do caching is about the only virtue I see but even that's a bit "hmmm".
+					//
+					// For offering easy integrations though: oh,
+					// gross.  `dv.pagePaths` also still takes a string, not even a list lol.  I'm kinda not okay with that.
+					// At first I was thinking "we can just offer a func that transforms date ranges into a list of file loading patterns",
+					// but... a stringconcat of those?  Really?  Really?
+					// The alternative is diving deeper and offering a function that glues together DV's `DataArray.from` and flatmaps that over `dv.page` and so on and so on.
+					// Possible.  But would definitely require us to have import their package to do that stuff, and I'm... oof.  I'm Unsure.
 					.where((p: DVT_Record) => String(p.file.name).startsWith("evt-"))
 
 				let results: EventInput[] = []
