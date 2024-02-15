@@ -18,7 +18,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 
 import luxonPlugin, { toLuxonDateTime } from '@fullcalendar/luxon3';
 
-import { getAPI } from 'obsidian-dataview';
+import { getAPI, Literal } from 'obsidian-dataview';
 
 import { DateTime } from 'luxon';
 
@@ -101,9 +101,10 @@ export class HorizonCalView extends ItemView {
 				// And I think someday we might have a compelling argument for making our own simpler query system that does _less_.
 				// (Or find some flags to DV that ask it to Do Less; that'd be great.)
 				// 
+				type DVT_Record = Record<string, Literal> & {file: TFile};
 				const dv = getAPI();
 				const pages = dv.pages('"sys/horizoncal"')
-					.where(p => String(p.file.name).startsWith("evt-"))
+					.where((p: DVT_Record) => String(p.file.name).startsWith("evt-"))
 
 				let results: EventInput[] = []
 				for (let i in pages.array()) {
