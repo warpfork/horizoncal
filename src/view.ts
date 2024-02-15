@@ -241,7 +241,7 @@ export class HorizonCalView extends ItemView {
 			},
 			eventResize: function (info) {
 				// Similar to the drop events.
-				console.log(info.event.title, " was resized by ", toLuxonDuration(info.startDelta, calUI).toHuman(), " and ", toLuxonDuration(info.endDelta, calUI).toHuman());
+				console.log(info.event.title, " was resized by ", toLuxonDuration(info.startDelta, calUI).shiftToAll().normalize().toHuman(), " and ", toLuxonDuration(info.endDelta, calUI).shiftToAll().toHuman());
 			},
 
 			// https://fullcalendar.io/docs/eventClick is for opening?
