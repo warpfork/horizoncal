@@ -22,7 +22,7 @@ export default class HorizonCalPlugin extends Plugin {
 		// Views!  This is what I'm here for.
 		this.registerView(
 			VIEW_TYPE,
-			(leaf) => new HorizonCalView(leaf)
+			(leaf) => new HorizonCalView(this, leaf)
 		);
 
 		// This adds a settings tab so the user can configure various aspects of the plugin

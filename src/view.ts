@@ -1,9 +1,9 @@
 import {
 	ItemView,
 	Menu,
-	WorkspaceLeaf
+	TFile,
+	WorkspaceLeaf,
 } from 'obsidian';
-
 
 import {
 	Calendar,
@@ -22,14 +22,16 @@ import { getAPI } from 'obsidian-dataview';
 import { DateTime } from 'luxon';
 
 import { HCEventFrontmatterSchema } from './data';
+import HorizonCalPlugin from './main';
 
 export const VIEW_TYPE = "horizoncal-view";
 
 var uniq = 1;
 
 export class HorizonCalView extends ItemView {
-	constructor(leaf: WorkspaceLeaf) {
+	constructor(plugin: HorizonCalPlugin, leaf: WorkspaceLeaf) {
 		super(leaf);
+		this.plugin = plugin;
 		this.uniq = uniq++;
 	}
 
@@ -44,6 +46,7 @@ export class HorizonCalView extends ItemView {
 	}
 	public navigation: false; // Don't generally let me click away from this view.
 
+	plugin: HorizonCalPlugin;
 	uniq: number; // Not structural.  Using this for sanitycheck during dev.
 	viewContentEl: Element; // Reference grabbed during onOpen.
 	calUIEl: HTMLElement; // Div created during onOpen to be fullcal's root.
@@ -179,7 +182,7 @@ export class HorizonCalView extends ItemView {
 
 	_doCal() {
 		if (this.calUI) this.calUI.destroy();
-		let calUI = new Calendar(this.calUIEl, {
+		this.calUI = new Calendar(this.calUIEl, {
 			plugins: [
 				// View plugins
 				dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin,
@@ -233,7 +236,7 @@ export class HorizonCalView extends ItemView {
 			// and then https://fullcalendar.io/docs/eventResize is the second 99%.
 			// okay, creating new events by clicking empty space might also need another hook.
 
-			eventDrop: function (info) {
+			eventDrop: (info) => {
 				// `info.event` -- the new event
 				// `info.oldEvent` -- you guessed it
 				// `info.delta` -- an object, but an odd one.  It does integer year/month/days, but all finer information in... milliseconds, lmao.  Okay.
@@ -241,23 +244,41 @@ export class HorizonCalView extends ItemView {
 				// So that was a very lossy change compared to our user's original input data, and should be considered before displaying anything.
 				console.log(info.event.title, " was shifted by ", info.delta, " -- new date: ", [info.event.start], "old date:", [info.oldEvent.start]);
 
-				// ok, step one map this back to file path.
-				// ... yes we do need the original TZ to do that, lol.
-				// actually this might be easier to do by making the event id derived from it.
-				// or just store the whole thing as an attachment (rather than storing the TZ).
-				info.event.setProp("id", "lolchanged")
-				console.log(calUI.getEvents().map(evt => evt.id))
-				console.log("does that update the index?", calUI.getEventById("lolchanged")) // yes, good.
+				// Step one: figure out what file we want to update for this.
+				// Or, balk immediately if we can't figure it out somehow.
+				if (!info.event.id) {
+					alert("cannot alter that event; no known data source");
+					info.revert()
+					return
+				}
+				let file = this.plugin.app.vault.getAbstractFileByPath(info.event.id)
+				if (!file || !(file instanceof TFile)) {
+					alert("event id did not map to a file path!");
+					info.revert()
+					return
+				}
+
+				// Step two: we'll use the fileManager to do an update of the frontmatter.
+				// (This handles a lot of serialization shenanigans for us very conveniently.)
+				this.plugin.app.fileManager.processFrontMatter(file, (frontmatter: any): void => {
+					console.log("frontmatter", frontmatter)
+					// TODO
+				});
+
+				// Step three: decide if the filename is still applicable or needs to change -- and possibly change it!
+				// If we change the filename, we'll also change the event ID.
+				//info.event.setProp("id", "lolchanged")
+				//console.log(calUI.getEvents().map(evt => evt.id))
+				//console.log("does that update the index?", calUI.getEventById("lolchanged")) // yes, good.
 			},
-			eventResize: function (info) {
+			eventResize: (info) => {
 				// Similar to the drop events.
-				console.log(info.event.title, " was resized by ", toLuxonDuration(info.startDelta, calUI).shiftToAll().normalize().toHuman(), " and ", toLuxonDuration(info.endDelta, calUI).shiftToAll().toHuman());
+				console.log(info.event.title, " was resized by ", toLuxonDuration(info.startDelta, this.calUI).shiftToAll().normalize().toHuman(), " and ", toLuxonDuration(info.endDelta, this.calUI).shiftToAll().toHuman());
 			},
 
 			// https://fullcalendar.io/docs/eventClick is for opening?
 			// i hope it understands doubleclick or... something.
 		})
-		this.calUI = calUI
 		this.calUI.render()
 		// console.log("okay here's the calendar's event view!", this.calUI.getEvents())
 		// console.log("did our TZs roundtrip?", this.calUI.getEvents().map(evt => evt.start))

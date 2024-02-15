@@ -78,3 +78,10 @@ function parseTime(time: string): Duration {
 	}
 	return Duration.fromObject({ hours: parsed.hour, minutes: parsed.minute });
 };
+
+/*-------------------------------------------------------------*/
+/* File paths show up enough that they're worth a helper type. */
+
+export class HCEventFilePath {
+
+}
