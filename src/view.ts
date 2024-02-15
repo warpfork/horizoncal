@@ -172,6 +172,7 @@ export class HorizonCalView extends ItemView {
 	}
 
 	async onClose() {
+		// Problematic: this thing is reattaching its stylesheet repeatedly, and it's not deleting that again.
 		if (this.calUI) this.calUI.destroy()
 	}
 
