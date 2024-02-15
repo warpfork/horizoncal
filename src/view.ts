@@ -15,7 +15,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
-import luxonPlugin, { toLuxonDuration } from '@fullcalendar/luxon3';
+import luxonPlugin, { toLuxonDateTime, toLuxonDuration } from '@fullcalendar/luxon3';
 
 import { getAPI } from 'obsidian-dataview';
 
@@ -260,9 +260,31 @@ export class HorizonCalView extends ItemView {
 
 				// Step two: we'll use the fileManager to do an update of the frontmatter.
 				// (This handles a lot of serialization shenanigans for us very conveniently.)
-				this.plugin.app.fileManager.processFrontMatter(file, (frontmatter: any): void => {
-					console.log("frontmatter", frontmatter)
-					// TODO
+				// (Although I am rather annoyed it doesn't give us control of order.  I *never* want to see the three-part time info separated from each other.)
+				this.plugin.app.fileManager.processFrontMatter(file, (evtFm: any): void => {
+					let newStartDt = toLuxonDateTime(info.event.start as Date, this.calUI).setZone(evtFm.evtTZ)
+					let newEndDt = toLuxonDateTime(info.event.end as Date, this.calUI).setZone(evtFm.endTZ || evtFm.evtTZ)
+					// The start date is always written!
+					evtFm.evtDate = newStartDt.toFormat("yyyy-MM-dd")
+					// The start time should only be written if it was there before, or if it's now nonzero.
+					// (All day events have zero here, and should have stored no time.)
+					if (evtFm.evtTime || newStartDt.hour != 0 || newStartDt.minute != 0) {
+						evtFm.evtTime = newStartDt.toFormat("HH:mm")
+					}
+					// Write the end date only if it's different than the start date.
+					// Remove it if it's the same.
+					if (newStartDt.year != newEndDt.year || newStartDt.month != newEndDt.month || newStartDt.day != newEndDt.day) {
+						evtFm.endDate = newEndDt.toFormat("yyyy-MM-dd")
+					} else {
+						delete(evtFm.endDate)
+					}
+					// As with start time: the end time should only be written if it was there before, or if it's now nonzero.
+					// (All day events have zero here, and should have stored no time.)
+					if (evtFm.endTime || newEndDt.hour != 0 || newEndDt.minute != 0) {
+						evtFm.endTime = newEndDt.toFormat("HH:mm")
+					}
+					// Persistence?
+					// It's handled magically by processFrontMatter based on our mutations to the argument.
 				});
 
 				// Step three: decide if the filename is still applicable or needs to change -- and possibly change it!
