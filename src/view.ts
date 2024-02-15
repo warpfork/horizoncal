@@ -131,6 +131,7 @@ export class HorizonCalView extends ItemView {
 					// TODO we do need to validate the zones were accepted here.  (Everything else should already be covered.)
 
 					results.push({
+						id: pages[i].file.path,
 						title: evtFm.title,
 						start: startDt.toISO() as string,
 						end: endDt.toISO() as string,
@@ -239,6 +240,14 @@ export class HorizonCalView extends ItemView {
 				// And again, note that FC already turned ALL timezones into not just fixed offsets, but a single uniform one for the whole calendar and all events.
 				// So that was a very lossy change compared to our user's original input data, and should be considered before displaying anything.
 				console.log(info.event.title, " was shifted by ", info.delta, " -- new date: ", [info.event.start], "old date:", [info.oldEvent.start]);
+
+				// ok, step one map this back to file path.
+				// ... yes we do need the original TZ to do that, lol.
+				// actually this might be easier to do by making the event id derived from it.
+				// or just store the whole thing as an attachment (rather than storing the TZ).
+				info.event.setProp("id", "lolchanged")
+				console.log(calUI.getEvents().map(evt => evt.id))
+				console.log("does that update the index?", calUI.getEventById("lolchanged")) // yes, good.
 			},
 			eventResize: function (info) {
 				// Similar to the drop events.
