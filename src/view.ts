@@ -7,15 +7,16 @@ import {
 
 import {
 	Calendar,
+	EventDropArg,
 	EventInput,
 	EventSourceInput
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import interactionPlugin, { EventResizeDoneArg } from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
-import luxonPlugin, { toLuxonDateTime, toLuxonDuration } from '@fullcalendar/luxon3';
+import luxonPlugin, { toLuxonDateTime } from '@fullcalendar/luxon3';
 
 import { getAPI } from 'obsidian-dataview';
 
@@ -182,6 +183,70 @@ export class HorizonCalView extends ItemView {
 
 	_doCal() {
 		if (this.calUI) this.calUI.destroy();
+
+		// This change hook function is used for both fullcal's `eventDrop` and `eventResize` callbacks.
+		// They're very similar, except the resize callback gets two different delta values in its info param.
+		// They both have old and new events, though, and those both have start and end times,
+		// and since we based all our logic on that rather than deltas, we get to reuse the function completely for both.
+		let changeHook = (info: EventDropArg | EventResizeDoneArg) => {
+			// Step one: figure out what file we want to update for this.
+			// Or, balk immediately if we can't figure it out somehow.
+			if (!info.event.id) {
+				alert("cannot alter that event; no known data source");
+				info.revert()
+				return
+			}
+			let file = this.plugin.app.vault.getAbstractFileByPath(info.event.id)
+			if (!file || !(file instanceof TFile)) {
+				alert("event id did not map to a file path!");
+				info.revert()
+				return
+			}
+
+			// Step two: we'll use the fileManager to do an update of the frontmatter.
+			// (This handles a lot of serialization shenanigans for us very conveniently.)
+			// (Although I am rather annoyed it doesn't give us control of order.  I *never* want to see the three-part time info separated from each other.)
+			this.plugin.app.fileManager.processFrontMatter(file, (evtFm: any): void => {
+				// First, shift the dates we got from fullcalendar back into the timezones this event specified.
+				//  Fullcalendar doesn't retain timezones -- it flattens everything to an offset only (because javascript Date forces that),
+				//   and it also shifts everything to the calendar-wide tz offset.  This is quite far from what we want.
+				let newStartDt = toLuxonDateTime(info.event.start as Date, this.calUI).setZone(evtFm.evtTZ)
+				let newEndDt = toLuxonDateTime(info.event.end as Date, this.calUI).setZone(evtFm.endTZ || evtFm.evtTZ)
+
+				// Now start modifying the frontmatter:
+
+				// The start date is always written!
+				evtFm.evtDate = newStartDt.toFormat("yyyy-MM-dd")
+				// The start time should only be written if it was there before, or if it's now nonzero.
+				// (All day events have zero here, and should have stored no time.)
+				if (evtFm.evtTime || newStartDt.hour != 0 || newStartDt.minute != 0) {
+					evtFm.evtTime = newStartDt.toFormat("HH:mm")
+				}
+				// Write the end date only if it's different than the start date.
+				// Remove it if it's the same.
+				if (newStartDt.year != newEndDt.year || newStartDt.month != newEndDt.month || newStartDt.day != newEndDt.day) {
+					evtFm.endDate = newEndDt.toFormat("yyyy-MM-dd")
+				} else {
+					delete(evtFm.endDate)
+				}
+				// As with start time: the end time should only be written if it was there before, or if it's now nonzero.
+				// (All day events have zero here, and should have stored no time.)
+				if (evtFm.endTime || newEndDt.hour != 0 || newEndDt.minute != 0) {
+					evtFm.endTime = newEndDt.toFormat("HH:mm")
+				}
+
+				// Persistence?
+				// It's handled magically by processFrontMatter as soon as this callback returns:
+				//  it persists our mutations to the argument.
+			});
+
+			// Step three: decide if the filename is still applicable or needs to change -- and possibly change it!
+			// If we change the filename, we'll also change the event ID.
+			//info.event.setProp("id", "lolchanged")
+			//console.log(calUI.getEvents().map(evt => evt.id))
+			//console.log("does that update the index?", calUI.getEventById("lolchanged")) // yes, good.
+		}
+
 		this.calUI = new Calendar(this.calUIEl, {
 			plugins: [
 				// View plugins
@@ -232,72 +297,9 @@ export class HorizonCalView extends ItemView {
 
 			// Dragging?  Spicy.
 			editable: true,
-			// todo: https://fullcalendar.io/docs/eventDrop is 99% of it.
-			// and then https://fullcalendar.io/docs/eventResize is the second 99%.
+			eventDrop: changeHook,
+			eventResize: changeHook,
 			// okay, creating new events by clicking empty space might also need another hook.
-
-			eventDrop: (info) => {
-				// `info.event` -- the new event
-				// `info.oldEvent` -- you guessed it
-				// `info.delta` -- an object, but an odd one.  It does integer year/month/days, but all finer information in... milliseconds, lmao.  Okay.
-				// And again, note that FC already turned ALL timezones into not just fixed offsets, but a single uniform one for the whole calendar and all events.
-				// So that was a very lossy change compared to our user's original input data, and should be considered before displaying anything.
-				console.log(info.event.title, " was shifted by ", info.delta, " -- new date: ", [info.event.start], "old date:", [info.oldEvent.start]);
-
-				// Step one: figure out what file we want to update for this.
-				// Or, balk immediately if we can't figure it out somehow.
-				if (!info.event.id) {
-					alert("cannot alter that event; no known data source");
-					info.revert()
-					return
-				}
-				let file = this.plugin.app.vault.getAbstractFileByPath(info.event.id)
-				if (!file || !(file instanceof TFile)) {
-					alert("event id did not map to a file path!");
-					info.revert()
-					return
-				}
-
-				// Step two: we'll use the fileManager to do an update of the frontmatter.
-				// (This handles a lot of serialization shenanigans for us very conveniently.)
-				// (Although I am rather annoyed it doesn't give us control of order.  I *never* want to see the three-part time info separated from each other.)
-				this.plugin.app.fileManager.processFrontMatter(file, (evtFm: any): void => {
-					let newStartDt = toLuxonDateTime(info.event.start as Date, this.calUI).setZone(evtFm.evtTZ)
-					let newEndDt = toLuxonDateTime(info.event.end as Date, this.calUI).setZone(evtFm.endTZ || evtFm.evtTZ)
-					// The start date is always written!
-					evtFm.evtDate = newStartDt.toFormat("yyyy-MM-dd")
-					// The start time should only be written if it was there before, or if it's now nonzero.
-					// (All day events have zero here, and should have stored no time.)
-					if (evtFm.evtTime || newStartDt.hour != 0 || newStartDt.minute != 0) {
-						evtFm.evtTime = newStartDt.toFormat("HH:mm")
-					}
-					// Write the end date only if it's different than the start date.
-					// Remove it if it's the same.
-					if (newStartDt.year != newEndDt.year || newStartDt.month != newEndDt.month || newStartDt.day != newEndDt.day) {
-						evtFm.endDate = newEndDt.toFormat("yyyy-MM-dd")
-					} else {
-						delete(evtFm.endDate)
-					}
-					// As with start time: the end time should only be written if it was there before, or if it's now nonzero.
-					// (All day events have zero here, and should have stored no time.)
-					if (evtFm.endTime || newEndDt.hour != 0 || newEndDt.minute != 0) {
-						evtFm.endTime = newEndDt.toFormat("HH:mm")
-					}
-					// Persistence?
-					// It's handled magically by processFrontMatter based on our mutations to the argument.
-				});
-
-				// Step three: decide if the filename is still applicable or needs to change -- and possibly change it!
-				// If we change the filename, we'll also change the event ID.
-				//info.event.setProp("id", "lolchanged")
-				//console.log(calUI.getEvents().map(evt => evt.id))
-				//console.log("does that update the index?", calUI.getEventById("lolchanged")) // yes, good.
-			},
-			eventResize: (info) => {
-				// Similar to the drop events.
-				console.log(info.event.title, " was resized by ", toLuxonDuration(info.startDelta, this.calUI).shiftToAll().normalize().toHuman(), " and ", toLuxonDuration(info.endDelta, this.calUI).shiftToAll().toHuman());
-			},
-
 			// https://fullcalendar.io/docs/eventClick is for opening?
 			// i hope it understands doubleclick or... something.
 		})
