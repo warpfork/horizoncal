@@ -148,6 +148,7 @@ So with that rough scale in mind, let's think about how many directories make se
   - There's no hard scalability reason to make this many subdirectories.  (Popping open a dir with a few hundred files shouldn't lag any reasonable interface or process.)
   - There's no hard scalability reason _not_ to make daily dirs either, though.  (For a user with only one event per day, a whopping 365 inodes get wasted per year on dirs with one file?  _oh no_.  Yeah, I think it'll be fine.)
   - The deciding vote was actually cast by considering the Dataview plugin: Dataview lets you query individual paths, or directories, but it doesn't have a way to do *glob patterns* of files within directories... not without loading and parsing them first, and filtering later.  This becomes a strong vote for using directories per day.  (Using Dataview efficiently on this structure still requires composing multiple queries, but that's a source of friction that's solvable, whereas getting Dataview to load fewer files per directory is (currently) flatly insurmountable.)
+  - One major argument _against_ daily files is that if a user would create files manually, a dir per month remains typically non-obnoxious, but per day can get rather annoying.  Whether this is a serious consider considering that we have UIs and commands for making events is unclear.
 
 All this leads us to: yes, we'll have a directory for each of the year, the month, and the day.
 

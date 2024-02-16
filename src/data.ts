@@ -53,7 +53,7 @@ export type HCEventFrontmatter = z.infer<typeof HCEventFrontmatterSchema>;
 /*-----------------------------------------*/
 /* And now for somewhat more cursed stuff. */
 
-function parseYMD(ymd: string): { year: number, month: number, day: number } | { error: Error } {
+function parseYMD(ymd: string): DateTime | { error: Error } {
 	let parsed = DateTime.fromFormat(ymd, "yyyy-MM-dd");
 	if (parsed.invalidReason) {
 		return { error: Error(parsed.invalidReason + ": " + parsed.invalidExplanation as string) }
@@ -95,9 +95,27 @@ function slugify(str: string): string {
 
 export class HCEventFilePath {
 	static fromFrontmatter(evtFm: any): HCEventFilePath {
-		return {path:""}
+		let dt = parseYMD(evtFm.evtDate);
+		if ("error" in dt) {
+			dt = DateTime.local(0, 0, 0, 0, 0, 0)
+		}
+		return new HCEventFilePath({
+			dirs: dt.toFormat("yyyy/MM/dd"),
+			fprefix: "evt-" + dt.toFormat("yyyy-MM-dd"),
+			slug: slugify(evtFm.title),
+		})
 	}
 
-	path: string;
-	
+	constructor(init?: Partial<HCEventFilePath>) {
+		Object.assign(this, init);
+	}
+
+	dirs: string;
+	fprefix: string;
+	slug: string;
+
+	get wholePath(): string {
+		return this.dirs + "/" + this.fprefix + "--" + this.slug + ".md"
+	}
+
 }

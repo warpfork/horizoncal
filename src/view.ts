@@ -22,7 +22,7 @@ import { getAPI, Literal } from 'obsidian-dataview';
 
 import { DateTime } from 'luxon';
 
-import { HCEventFrontmatterSchema } from './data';
+import { HCEventFilePath, HCEventFrontmatterSchema } from './data';
 import HorizonCalPlugin from './main';
 
 export const VIEW_TYPE = "horizoncal-view";
@@ -220,7 +220,7 @@ export class HorizonCalView extends ItemView {
 		// They're very similar, except the resize callback gets two different delta values in its info param.
 		// They both have old and new events, though, and those both have start and end times,
 		// and since we based all our logic on that rather than deltas, we get to reuse the function completely for both.
-		let changeHook = (info: EventDropArg | EventResizeDoneArg) => {
+		let changeHook = async (info: EventDropArg | EventResizeDoneArg) => {
 			// Step one: figure out what file we want to update for this.
 			// Or, balk immediately if we can't figure it out somehow.
 			if (!info.event.id) {
@@ -238,7 +238,8 @@ export class HorizonCalView extends ItemView {
 			// Step two: we'll use the fileManager to do an update of the frontmatter.
 			// (This handles a lot of serialization shenanigans for us very conveniently.)
 			// (Although I am rather annoyed it doesn't give us control of order.  I *never* want to see the three-part time info separated from each other.)
-			this.plugin.app.fileManager.processFrontMatter(file, (evtFm: any): void => {
+			let evtFm2: any;
+			await this.plugin.app.fileManager.processFrontMatter(file, (evtFm: any): void => {
 				// First, shift the dates we got from fullcalendar back into the timezones this event specified.
 				//  Fullcalendar doesn't retain timezones -- it flattens everything to an offset only (because javascript Date forces that),
 				//   and it also shifts everything to the calendar-wide tz offset.  This is quite far from what we want.
@@ -270,12 +271,22 @@ export class HorizonCalView extends ItemView {
 				// Persistence?
 				// It's handled magically by processFrontMatter as soon as this callback returns:
 				//  it persists our mutations to the argument.
+
+				// But we also keep this value because we need it in a moment to consider the file's path, as well.
+				evtFm2 = evtFm;
 			});
 
 			// Step three: decide if the filename is still applicable or needs to change -- and possibly change it!
 			// If we change the filename, we'll also change the event ID.
-			//info.event.setProp("id", "lolchanged")
-			//console.log(calUI.getEvents().map(evt => evt.id))
+			let path = HCEventFilePath.fromFrontmatter(evtFm2);
+			let wholePath = path.wholePath;
+			if (wholePath != info.event.id) {
+				console.log("moving to", wholePath)
+				await this.plugin.app.vault.createFolder("sys/horizoncal/"+path.dirs) // isn't idempotent, sigh.  omg and it throws lmao.
+				await this.plugin.app.fileManager.renameFile(file, wholePath)
+				info.event.setProp("id", wholePath)
+			}
+			console.log(this.calUI.getEvents().map(evt => evt.id))
 			//console.log("does that update the index?", calUI.getEventById("lolchanged")) // yes, good.
 		}
 
