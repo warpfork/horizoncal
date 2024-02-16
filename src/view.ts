@@ -122,6 +122,19 @@ export class HorizonCalView extends ItemView {
 					// but... a stringconcat of those?  Really?  Really?
 					// The alternative is diving deeper and offering a function that glues together DV's `DataArray.from` and flatmaps that over `dv.page` and so on and so on.
 					// Possible.  But would definitely require us to have import their package to do that stuff, and I'm... oof.  I'm Unsure.
+					//
+					// DOn't forget you still have the much, much simpler option of just calling `dv.pages` repeatedly and then conjoining it.
+					// That DOES strongly push you to use folders per day, though.
+					// So I guess we should do that and come back to the rest later.
+
+					// Still going to have to have to call `page` (not `pages`) with specific targets to handle getting Tzch events.
+					// 
+					// Wonder if doing two months is actually just shrug for scale.  Probably is.
+					
+					// The other tiebreaker here is: moving a bunch of files in per-day dirs up one as a migration is trivial.
+					// Adding another layer of dirs requires bothering to write code.
+					//
+					// Also i'm pretty sure obsidian itself is indexing at least all filenames proactively.  So it's free to look at that.
 					.where((p: DVT_Record) => String(p.file.name).startsWith("evt-"))
 
 				let results: EventInput[] = []
