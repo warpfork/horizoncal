@@ -282,11 +282,15 @@ export class HorizonCalView extends ItemView {
 			let wholePath = path.wholePath;
 			if (wholePath != info.event.id) {
 				console.log("moving to", wholePath)
-				await this.plugin.app.vault.createFolder("sys/horizoncal/"+path.dirs) // isn't idempotent, sigh.  omg and it throws lmao.
-				await this.plugin.app.fileManager.renameFile(file, wholePath)
+				try {
+					// Wrapped in a `try` because it throws on "already exists".
+					// TODO bother to react better to other errors.
+					await this.plugin.app.vault.createFolder("sys/horizoncal/"+path.dirs)
+				} catch {}
+				await this.plugin.app.fileManager.renameFile(file, "sys/horizoncal/"+wholePath)
 				info.event.setProp("id", wholePath)
 			}
-			console.log(this.calUI.getEvents().map(evt => evt.id))
+			// console.log(this.calUI.getEvents().map(evt => evt.id))
 			//console.log("does that update the index?", calUI.getEventById("lolchanged")) // yes, good.
 		}
 
