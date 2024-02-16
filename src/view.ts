@@ -288,7 +288,7 @@ export class HorizonCalView extends ItemView {
 					await this.plugin.app.vault.createFolder("sys/horizoncal/"+path.dirs)
 				} catch {}
 				await this.plugin.app.fileManager.renameFile(file, "sys/horizoncal/"+wholePath)
-				info.event.setProp("id", wholePath)
+				info.event.setProp("id", "sys/horizoncal/"+wholePath)
 			}
 			// console.log(this.calUI.getEvents().map(evt => evt.id))
 			//console.log("does that update the index?", calUI.getEventById("lolchanged")) // yes, good.
