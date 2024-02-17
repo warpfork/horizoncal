@@ -422,6 +422,9 @@ export class NewEventModal extends Modal {
 	data: HCEventFrontmatter;
 
 	onOpen() {
+		this._defragilify();
+		this._style();
+
 		let { contentEl } = this;
 		contentEl.createEl("h1", { text: "New event" });
 
@@ -441,19 +444,6 @@ export class NewEventModal extends Modal {
 					this.data.evtType = value
 				}));
 
-		// TODO: something to be super wary of about submitting is...
-		// on desktop, clicking anywhere but the modal closes it.
-		// Given that window managers also immediately send the click focusing an app all the way through...
-		// this means it's very very easy to accidentally close a modal.
-		//
-		// As a result of this, I think we should actually default to committing on unexpected close.
-		//
-		// But on mobile it's a different story: there, the back button or x must be used explicitly.
-		//
-		// And on desktop, a keypress of esc or click of x should also throw things away.
-		//
-		// I don't know how to disambiguate all these.
-		// This is the first time I'm finding an Obsidian UI API painfully lacking.
 		new Setting(contentEl)
 			.addButton((btn) => btn
 				.setButtonText("Submit")
@@ -463,23 +453,45 @@ export class NewEventModal extends Modal {
 					//this.onSubmit(this.result);
 				}));
 
-		this.modalEl.setCssStyles({ border: "2px solid #F0F" })
-		this.containerEl.setCssStyles({ backgroundColor: "#000022cc" })
-		// this.containerEl.setCssStyles({ backgroundColor: "var(--background-modifier-cover)" })
-		// this.modalEl.setCssStyles({ position: "absolute", bottom: "1em" })
-		// this.containerEl.replaceWith(this.containerEl.cloneNode(true));
-		// this.containerEl.addEventListener('click', (info) => {
-		// 	alert("heyo");
-		// 	info.stopImmediatePropagation();
-		// })
-		this.containerEl.children[0].remove();
 
 		// new Editor(contentEl); // i wish
 	}
 
+	_defragilify() {
+		// Remove the background div with a click handler that closes the modal.
+		// Closing modals accidentally with a stray click should not be so easy;
+		// as a user, I very _very_ rarely want the majority of clickable screen area
+		// to turn into a "silently throw away my data" action.
+		//
+		// If there were more params provide to `onClose` that we could disambiguate close types,
+		// and possibly prompt for confirmation, I would have less beef.
+		// Since there's not: yeah, nuke this entire trap.
+		//
+		// Fortunately, the handler we want to get rid of is on its entire own node.
+		// It appears to always be the first child, but we'll do a class check
+		// just to be on the safe side.
+		for (var i = 0; i < this.containerEl.children.length; i++) {
+			let child = this.containerEl.children[i];
+			// console.log("wtf", child)
+			if (child.hasClass("modal-bg")) { child.remove() }
+		}
+	}
+	_style() {
+		// I have capricious opinions.
+		this.modalEl.setCssStyles({ border: "2px solid #F0F" })
+		// We need *some* background color on the container, because we nuked the default fadeout during defragilify.
+		// The default would be more like `{ backgroundColor: "var(--background-modifier-cover)" }`, but let's have some fun anyway.
+		this.containerEl.setCssStyles({ backgroundColor: "#000022cc" })
+	}
+
 	onClose() {
 		let { contentEl } = this;
+
+		// No persistence unless you clicked our submit button.
+		//
+		// We made considerable effort to make sure accidental modal dismissal
+		// is unlikely even on desktop (which by default is otherwise a bit treacherous),
+		// so dropping data when we get here seems safe and reasonable to do.
 		contentEl.empty();
-		// alert("modal closed")
 	}
 }
