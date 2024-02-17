@@ -1,11 +1,10 @@
 import {
 	ItemView,
-	MarkdownView,
 	Menu,
 	Modal,
 	Setting,
 	TFile,
-	WorkspaceLeaf,
+	WorkspaceLeaf
 } from 'obsidian';
 
 import {
@@ -213,6 +212,7 @@ export class HorizonCalView extends ItemView {
 
 	async onClose() {
 		// Problematic: this thing is reattaching its stylesheet repeatedly, and it's not deleting that again.
+		console.log("hc view closed", this);
 		if (this.calUI) this.calUI.destroy()
 	}
 
@@ -396,6 +396,12 @@ export class HorizonCalView extends ItemView {
 				//alert('selected ' + info.startStr + ' to ' + info.endStr);
 				let startDt = toLuxonDateTime(info.start, this.calUI)
 				let endDt = toLuxonDateTime(info.end, this.calUI)
+
+				// this.leaf.setViewState({ type: "editor", })
+				// this.leaf.open(new MarkdownView(this.leaf))
+				// this.leaf.openFile(this.app.vault.getAbstractFileByPath("sys/horizoncal/demo.md"));
+
+
 				new NewEventModal(this, {
 					evtType: "default",
 					title: "untitled",
@@ -440,6 +446,10 @@ export class NewEventModal extends Modal {
 
 		new Setting(contentEl)
 			.setName("event type")
+			.addDropdown((droppy) => droppy
+				.addOption("a", "A")
+				.addOption("b", "B"))
+			.addSearch((comp) => comp.setValue("wat"))
 			.addText((text) => text
 				.setValue(this.data.evtType)
 				.onChange((value) => {
@@ -447,33 +457,46 @@ export class NewEventModal extends Modal {
 				}));
 
 		new Setting(contentEl)
-			.addButton((btn) => btn
-				.setButtonText("Submit")
-				.setCta()
-				.onClick(() => {
-					this.close();
+			.setName("date tho").controlEl.innerHTML = '<input type="date">';
+
+		((section: HTMLElement) => {
+			// okay, mad science says: don't do this.  It's not mean to be recursive.
+			// the styling is very not set up for it.
+			// you'll be better off doing your own things directly.
+			// ... oh, it's even worse on mobile.  invisible entirely.
+			new Setting(section)
+				.setName("woww")
+				.addToggle((tog) => { });
+			new Setting(section)
+				.setName("shazam")
+				.addToggle((tog) => { });
+			new Setting(section)
+				.setName("zrea")
+				.addText((text) => { });
+			new Setting(section)
+				.setName("zonk")
+				.addToggle((tog) => { });
+		})(new Setting(contentEl)
+			.setName("complx").controlEl)
+
+		new Setting(contentEl)
+			.addButton(btn => {
+				btn.setIcon("checkmark");
+				btn.setTooltip("Save");
+				btn.onClick(() => {
 					//this.onSubmit(this.result);
-				}));
-
-		// So... yes you *can* add a MarkdownView...
-		// to a leaf.  If it's the same one our view is already using,
-		// we end up with more elemnts added to the end.
-		//
-		// Modals don't have a leaf.  So this won't fly.
-		//
-		// Using the same leaf twice?  KINDA works.
-		// But I don't think it's meant to.
-		//
-		// You get mostly working elements, but...
-		// the new menu you get has a lot of buttons that'll error, nuking the leaf
-		// (and both views that were "co-owning" it).
-		// That includes trying to switch to reading or source view, surprisingly.
-		// (But "Add File Property" worked!)
-		let mdView = new MarkdownView(this.parentView.leaf)
-		mdView.allowNoFile = true; // no apparently effect.
-		mdView.data = "hello"; // no effect.
-
-		// new Editor(contentEl); // i wish
+					this.close();
+				});
+				return btn;
+			})
+			.addButton(btn => {
+				btn.setIcon("cross");
+				btn.setTooltip("Cancel");
+				btn.onClick(() => {
+					this.close();
+				});
+				return btn;
+			});
 	}
 
 	_defragilify() {
