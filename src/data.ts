@@ -23,7 +23,7 @@ const YMDSchema = z.string().transform((val, ctx) => {
 	year: z.number().int().gte(1000).lte(9999),
 	month: z.number().int().gte(1).lte(12),
 	day: z.number().int().gte(1).lte(31),
-})).brand("YMD")
+}))
 
 const HoursMinutesSchema = z.string().transform(parseTime).pipe(z.object({
 	hours: z.number().int().gte(0),

@@ -1,6 +1,9 @@
 import {
+	App,
 	ItemView,
 	Menu,
+	Modal,
+	Setting,
 	TFile,
 	WorkspaceLeaf,
 } from 'obsidian';
@@ -22,7 +25,7 @@ import { getAPI, Literal } from 'obsidian-dataview';
 
 import { DateTime } from 'luxon';
 
-import { HCEventFilePath, HCEventFrontmatterSchema } from './data';
+import { HCEventFilePath, HCEventFrontmatter, HCEventFrontmatterSchema } from './data';
 import HorizonCalPlugin from './main';
 
 export const VIEW_TYPE = "horizoncal-view";
@@ -380,17 +383,24 @@ export class HorizonCalView extends ItemView {
 			longPressDelay: 200, // Default is a full second, insanely too long.
 			eventDrop: changeHook,
 			eventResize: changeHook,
-			dateClick: (info) => {
-				// I don't think we have a way to detect "double click".  It's an event registration thing, not a field on the event.
-				// On mobile: this does fire.  And it doesn't fire on drag.  So that's good.
-				// 'select' might be more what I want, though.
-				let dt = toLuxonDateTime(info.date, this.calUI)
-				alert("TODO: make new event for " + dt.toFormat("yyyy-MM-dd HH:mm"))
-			},
+			// dateClick: (info) => {
+			// 	// I don't think we have a way to detect "double click".  It's an event registration thing, not a field on the event.
+			// 	// On mobile: this does fire.  And it doesn't fire on drag.  So that's good.
+			// 	// 'select' might be more what I want, though.
+			// 	let dt = toLuxonDateTime(info.date, this.calUI)
+			// 	alert("TODO: make new event for " + dt.toFormat("yyyy-MM-dd HH:mm"))
+			// },
 			selectable: true, // Enables the select callback and related UI.
 			// There are some fun params to this like `selectMinDistance` and `selectMirror`, but so far I don't see the appeal of engaging them.
 			select: (info) => {
-				alert('selected ' + info.startStr + ' to ' + info.endStr);
+				//alert('selected ' + info.startStr + ' to ' + info.endStr);
+				let startDt = toLuxonDateTime(info.start, this.calUI)
+				let endDt = toLuxonDateTime(info.end, this.calUI)
+				new NewEventModal(this.app, {
+					evtType: "default",
+					title: "untitled",
+					evtDate: startDt,
+				}).open();
 			},
 		})
 		this.calUI.render()
@@ -399,5 +409,64 @@ export class HorizonCalView extends ItemView {
 		// No, no they did not. `.getTimezoneOffset()` gives a number in minutes, and it's alll the local ones.
 		// console.log("howbout wat luxonifier?", this.calUI.getEvents().map(evt => toLuxonDateTime(evt.start as Date, this.calUI)))
 		// NOPE, they're all `_zone: SystemZone` now.  Goddamnit.
+	}
+}
+
+
+export class NewEventModal extends Modal {
+	constructor(app: App, data: HCEventFrontmatter) {
+		super(app);
+		this.data = data;
+	}
+
+	data: HCEventFrontmatter;
+
+	onOpen() {
+		let { contentEl } = this;
+		contentEl.createEl("h1", { text: "New event" });
+
+		new Setting(contentEl)
+			.setName("Title")
+			.addText((text) => text
+				.setValue(this.data.title)
+				.onChange((value) => {
+					this.data.title = value
+				}));
+
+		new Setting(contentEl)
+			.setName("event type")
+			.addText((text) => text
+				.setValue(this.data.evtType)
+				.onChange((value) => {
+					this.data.evtType = value
+				}));
+
+		// TODO: something to be super wary of about submitting is...
+		// on desktop, clicking anywhere but the modal closes it.
+		// Given that window managers also immediately send the click focusing an app all the way through...
+		// this means it's very very easy to accidentally close a modal.
+		//
+		// As a result of this, I think we should actually default to committing on unexpected close.
+		//
+		// But on mobile it's a different story: there, the back button or x must be used explicitly.
+		//
+		// And on desktop, a keypress of esc or click of x should also throw things away.
+		//
+		// I don't know how to disambiguate all these.
+		// This is the first time I'm finding an Obsidian UI API painfully lacking.
+		new Setting(contentEl)
+			.addButton((btn) => btn
+				.setButtonText("Submit")
+				.setCta()
+				.onClick(() => {
+					this.close();
+					//this.onSubmit(this.result);
+				}));
+	}
+
+	onClose() {
+		let { contentEl } = this;
+		contentEl.empty();
+		alert("modal closed")
 	}
 }
