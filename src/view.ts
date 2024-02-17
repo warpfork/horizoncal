@@ -269,7 +269,8 @@ export class HorizonCalView extends ItemView {
 				}
 				// Copy the TZ.
 				// Or if it didn't exist: it does now!
-				evtFm.evtTZ = (refFm.evtTZ || "CET"); // FIXME
+				// (Right now, this just uses the local zone; future work is to use our own tzch events as cues.)
+				evtFm.evtTZ = (refFm.evtTZ || DateTime.local().zoneName);
 				// Write the end date only if it's different than the start date.
 				if (newStartDt.year != newEndDt.year || newStartDt.month != newEndDt.month || newStartDt.day != newEndDt.day) {
 					evtFm.endDate = newEndDt.toFormat("yyyy-MM-dd")
