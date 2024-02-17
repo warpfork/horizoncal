@@ -101,7 +101,7 @@ export class HorizonCalView extends ItemView {
 				// And I think someday we might have a compelling argument for making our own simpler query system that does _less_.
 				// (Or find some flags to DV that ask it to Do Less; that'd be great.)
 				// 
-				type DVT_Record = Record<string, Literal> & {file: TFile};
+				type DVT_Record = Record<string, Literal> & { file: TFile };
 				const dv = getAPI();
 				const pages = dv.pages('"sys/horizoncal"')
 					// TODO need this to be as un-eager as possible.
@@ -130,7 +130,7 @@ export class HorizonCalView extends ItemView {
 					// Still going to have to have to call `page` (not `pages`) with specific targets to handle getting Tzch events.
 					// 
 					// Wonder if doing two months is actually just shrug for scale.  Probably is.
-					
+
 					// The other tiebreaker here is: moving a bunch of files in per-day dirs up one as a migration is trivial.
 					// Adding another layer of dirs requires bothering to write code.
 					//
@@ -318,10 +318,10 @@ export class HorizonCalView extends ItemView {
 				try {
 					// Wrapped in a `try` because it throws on "already exists".
 					// TODO bother to react better to other errors.
-					await this.plugin.app.vault.createFolder("sys/horizoncal/"+path.dirs)
-				} catch {}
-				await this.plugin.app.fileManager.renameFile(file, "sys/horizoncal/"+wholePath)
-				info.event.setProp("id", "sys/horizoncal/"+wholePath)
+					await this.plugin.app.vault.createFolder("sys/horizoncal/" + path.dirs)
+				} catch { }
+				await this.plugin.app.fileManager.renameFile(file, "sys/horizoncal/" + wholePath)
+				info.event.setProp("id", "sys/horizoncal/" + wholePath)
 			}
 			// console.log(this.calUI.getEvents().map(evt => evt.id))
 			//console.log("does that update the index?", calUI.getEventById("lolchanged")) // yes, good.
