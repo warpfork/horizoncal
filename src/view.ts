@@ -5,7 +5,7 @@ import {
 	Modal,
 	Setting,
 	TFile,
-	WorkspaceLeaf,
+	WorkspaceLeaf
 } from 'obsidian';
 
 import {
@@ -462,11 +462,24 @@ export class NewEventModal extends Modal {
 					this.close();
 					//this.onSubmit(this.result);
 				}));
+
+		this.modalEl.setCssStyles({ border: "2px solid #F0F" })
+		this.containerEl.setCssStyles({ backgroundColor: "#000022cc" })
+		// this.containerEl.setCssStyles({ backgroundColor: "var(--background-modifier-cover)" })
+		// this.modalEl.setCssStyles({ position: "absolute", bottom: "1em" })
+		// this.containerEl.replaceWith(this.containerEl.cloneNode(true));
+		// this.containerEl.addEventListener('click', (info) => {
+		// 	alert("heyo");
+		// 	info.stopImmediatePropagation();
+		// })
+		this.containerEl.children[0].remove();
+
+		// new Editor(contentEl); // i wish
 	}
 
 	onClose() {
 		let { contentEl } = this;
 		contentEl.empty();
-		alert("modal closed")
+		// alert("modal closed")
 	}
 }
