@@ -36,7 +36,7 @@ const HoursMinutesSchema = z.string().transform(parseTime).pipe(z.object({
 // 
 // So, optional fields are in use.  Any automatic fill-in of values is later, and generally close to the usage site.
 export const HCEventFrontmatterSchema = z.object({
-	eventType: z.string(), // An enum, of sorts, but a user-defined one, so no real validation.
+	evtType: z.string(), // An enum, of sorts, but a user-defined one, so no real validation.
 	title: z.string().default(""),
 	evtDate: YMDSchema,
 	evtTime: HoursMinutesSchema.optional(),

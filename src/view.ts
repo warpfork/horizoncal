@@ -246,26 +246,62 @@ export class HorizonCalView extends ItemView {
 				let newStartDt = toLuxonDateTime(info.event.start as Date, this.calUI).setZone(evtFm.evtTZ)
 				let newEndDt = toLuxonDateTime(info.event.end as Date, this.calUI).setZone(evtFm.endTZ || evtFm.evtTZ)
 
-				// Now start modifying the frontmatter:
+				// Now start modifying the frontmatter...
+				// But we're going to do this by making a new object.
+				// We're going to append all properties we manage, in order.
+				// Then we're going to merge back any remaining properties at the end.
+				// This dance creates stable ordering (and shifts user content to the bottom).
+				let newFm: any = {}
 
+				// Copy the most essential traits, like title and type!
+				newFm.title = evtFm.title
+				newFm.evtType = evtFm.evtType
 				// The start date is always written!
-				evtFm.evtDate = newStartDt.toFormat("yyyy-MM-dd")
+				newFm.evtDate = newStartDt.toFormat("yyyy-MM-dd")
 				// The start time should only be written if it was there before, or if it's now nonzero.
 				// (All day events have zero here, and should have stored no time.)
 				if (evtFm.evtTime || newStartDt.hour != 0 || newStartDt.minute != 0) {
-					evtFm.evtTime = newStartDt.toFormat("HH:mm")
+					newFm.evtTime = newStartDt.toFormat("HH:mm")
 				}
+				// Copy the TZ.
+				// Or if it didn't exist: it does now!
+				newFm.evtTZ = (evtFm.evtTZ || "CET"); // FIXME
 				// Write the end date only if it's different than the start date.
-				// Remove it if it's the same.
 				if (newStartDt.year != newEndDt.year || newStartDt.month != newEndDt.month || newStartDt.day != newEndDt.day) {
-					evtFm.endDate = newEndDt.toFormat("yyyy-MM-dd")
-				} else {
-					delete(evtFm.endDate)
+					newFm.endDate = newEndDt.toFormat("yyyy-MM-dd")
 				}
 				// As with start time: the end time should only be written if it was there before, or if it's now nonzero.
 				// (All day events have zero here, and should have stored no time.)
 				if (evtFm.endTime || newEndDt.hour != 0 || newEndDt.minute != 0) {
-					evtFm.endTime = newEndDt.toFormat("HH:mm")
+					newFm.endTime = newEndDt.toFormat("HH:mm")
+				}
+				// Copy the TZ, if it existed.
+				if (evtFm.endTZ) {
+					newFm.endTZ = evtFm.endTZ
+				}
+				// Copy our other known but optional properties, if they existed.
+				// (Be careful with equality here, as some of these are bools.)
+				if (evtFm.allDay !== undefined) {
+					newFm.allDay = evtFm.allDay
+				}
+				if (evtFm.completed !== undefined) {
+					newFm.completed = evtFm.completed
+				}
+
+				// Now replace the heck out of properties, such that we win at order.
+				// This looks kind of comical, but is the only way I can figure
+				// that updates the original object such that the callback has effects.
+				// I sure would love if there was just an "insertAfter" feature,
+				// given that the internal behavior of this stuff IS specified these days.
+				let copy = Object.assign({}, evtFm);
+				for (var prop in evtFm) {
+					delete evtFm[prop]
+				}
+				Object.assign(evtFm, newFm);
+				for (var prop in copy) {
+					if (!(prop in evtFm)) {
+						evtFm[prop] = copy[prop]
+					}
 				}
 
 				// Persistence?
