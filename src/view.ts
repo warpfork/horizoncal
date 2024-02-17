@@ -376,12 +376,22 @@ export class HorizonCalView extends ItemView {
 			},
 
 			// Dragging?  Spicy.
-			editable: true,
+			editable: true, // Enables the drop and resize callbacks and related UI.
+			longPressDelay: 200, // Default is a full second, insanely too long.
 			eventDrop: changeHook,
 			eventResize: changeHook,
-			// okay, creating new events by clicking empty space might also need another hook.
-			// https://fullcalendar.io/docs/eventClick is for opening?
-			// i hope it understands doubleclick or... something.
+			dateClick: (info) => {
+				// I don't think we have a way to detect "double click".  It's an event registration thing, not a field on the event.
+				// On mobile: this does fire.  And it doesn't fire on drag.  So that's good.
+				// 'select' might be more what I want, though.
+				let dt = toLuxonDateTime(info.date, this.calUI)
+				alert("TODO: make new event for " + dt.toFormat("yyyy-MM-dd HH:mm"))
+			},
+			selectable: true, // Enables the select callback and related UI.
+			// There are some fun params to this like `selectMinDistance` and `selectMirror`, but so far I don't see the appeal of engaging them.
+			select: (info) => {
+				alert('selected ' + info.startStr + ' to ' + info.endStr);
+			},
 		})
 		this.calUI.render()
 		// console.log("okay here's the calendar's event view!", this.calUI.getEvents())
