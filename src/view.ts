@@ -1,11 +1,11 @@
 import {
-	App,
 	ItemView,
+	MarkdownView,
 	Menu,
 	Modal,
 	Setting,
 	TFile,
-	WorkspaceLeaf
+	WorkspaceLeaf,
 } from 'obsidian';
 
 import {
@@ -396,7 +396,7 @@ export class HorizonCalView extends ItemView {
 				//alert('selected ' + info.startStr + ' to ' + info.endStr);
 				let startDt = toLuxonDateTime(info.start, this.calUI)
 				let endDt = toLuxonDateTime(info.end, this.calUI)
-				new NewEventModal(this.app, {
+				new NewEventModal(this, {
 					evtType: "default",
 					title: "untitled",
 					evtDate: startDt,
@@ -414,11 +414,13 @@ export class HorizonCalView extends ItemView {
 
 
 export class NewEventModal extends Modal {
-	constructor(app: App, data: HCEventFrontmatter) {
-		super(app);
+	constructor(parentView: HorizonCalView, data: HCEventFrontmatter) {
+		super(parentView.plugin.app);
 		this.data = data;
+		this.parentView = parentView;
 	}
 
+	parentView: HorizonCalView;
 	data: HCEventFrontmatter;
 
 	onOpen() {
@@ -453,6 +455,23 @@ export class NewEventModal extends Modal {
 					//this.onSubmit(this.result);
 				}));
 
+		// So... yes you *can* add a MarkdownView...
+		// to a leaf.  If it's the same one our view is already using,
+		// we end up with more elemnts added to the end.
+		//
+		// Modals don't have a leaf.  So this won't fly.
+		//
+		// Using the same leaf twice?  KINDA works.
+		// But I don't think it's meant to.
+		//
+		// You get mostly working elements, but...
+		// the new menu you get has a lot of buttons that'll error, nuking the leaf
+		// (and both views that were "co-owning" it).
+		// That includes trying to switch to reading or source view, surprisingly.
+		// (But "Add File Property" worked!)
+		let mdView = new MarkdownView(this.parentView.leaf)
+		mdView.allowNoFile = true; // no apparently effect.
+		mdView.data = "hello"; // no effect.
 
 		// new Editor(contentEl); // i wish
 	}
