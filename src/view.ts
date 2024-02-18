@@ -481,8 +481,8 @@ export class NewEventModal extends Modal {
 			.addButton(btn => {
 				btn.setIcon("checkmark");
 				btn.setTooltip("Save");
-				btn.onClick(() => {
-					//this.onSubmit(this.result);
+				btn.onClick(async () => {
+					await this._onSubmit();
 					this.close();
 				});
 				return btn;
@@ -521,6 +521,22 @@ export class NewEventModal extends Modal {
 		// We need *some* background color on the container, because we nuked the default fadeout during defragilify.
 		// The default would be more like `{ backgroundColor: "var(--background-modifier-cover)" }`, but let's have some fun anyway.
 		this.containerEl.setCssStyles({ backgroundColor: "#000022cc" })
+	}
+	async _onSubmit() {
+		// FIXME are you sure it's valid? :D
+
+		let path = HCEventFilePath.fromEvent(this.data);
+
+		let file = await this.app.vault.create("sys/horizoncal/" + path.wholePath, "")
+
+		await this.app.fileManager.processFrontMatter(file, (fileFm: any): void => {
+			this.data.foistFrontmatter(fileFm);
+			// Persistence?
+			// It's handled magically by processFrontMatter as soon as this callback returns:
+			//  it persists our mutations to the `fileFm` argument.
+		});
+
+		// TODO: bonk some UI refreshes!
 	}
 
 	onClose() {
