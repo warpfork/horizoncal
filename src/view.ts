@@ -141,7 +141,6 @@ export class HorizonCalView extends ItemView {
 				let results: EventInput[] = []
 				for (let i in pages.array()) {
 					// We're gonna read the frontmatter because it's least wild.
-					//console.log("plz", pages[i]) 
 					let evtFmRaw = pages[i].file.frontmatter
 
 					// Quick check first.
@@ -171,7 +170,6 @@ export class HorizonCalView extends ItemView {
 						start: hcEvt.getCompleteStartDt().toISO() as string,
 						end: hcEvt.getCompleteEndDt().toISO() as string,
 					})
-					//console.log("and that made?  this:", results.last())
 				}
 
 				successCallback(results)
@@ -251,7 +249,6 @@ export class HorizonCalView extends ItemView {
 				//  Fullcalendar doesn't retain timezones -- it flattens everything to an offset only (because javascript Date forces that),
 				//   and it also shifts everything to the calendar-wide tz offset.  This is quite far from what we want.
 				let newStartDt = toLuxonDateTime(info.event.start as Date, this.calUI).setZone(hcEvt.evtTZ.valueParsed)
-				console.log("whats", hcEvt.endTZ.valueParsed, hcEvt.evtTZ.valueParsed, hcEvt.endTZ.valueParsed || hcEvt.evtTZ.valueParsed)
 				let newEndDt = toLuxonDateTime(info.event.end as Date, this.calUI).setZone(hcEvt.endTZ.valueParsed || hcEvt.evtTZ.valueParsed)
 
 				// Stir our updated dates into the data.
@@ -285,8 +282,6 @@ export class HorizonCalView extends ItemView {
 				await this.plugin.app.fileManager.renameFile(file, "sys/horizoncal/" + wholePath)
 				info.event.setProp("id", "sys/horizoncal/" + wholePath)
 			}
-			// console.log(this.calUI.getEvents().map(evt => evt.id))
-			//console.log("does that update the index?", calUI.getEventById("lolchanged")) // yes, good.
 		}
 
 		this.calUI = new Calendar(this.calUIEl, {
@@ -370,11 +365,6 @@ export class HorizonCalView extends ItemView {
 			},
 		})
 		this.calUI.render()
-		// console.log("okay here's the calendar's event view!", this.calUI.getEvents())
-		// console.log("did our TZs roundtrip?", this.calUI.getEvents().map(evt => evt.start))
-		// No, no they did not. `.getTimezoneOffset()` gives a number in minutes, and it's alll the local ones.
-		// console.log("howbout wat luxonifier?", this.calUI.getEvents().map(evt => toLuxonDateTime(evt.start as Date, this.calUI)))
-		// NOPE, they're all `_zone: SystemZone` now.  Goddamnit.
 	}
 }
 
@@ -541,7 +531,6 @@ export class NewEventModal extends Modal {
 		// just to be on the safe side.
 		for (var i = 0; i < this.containerEl.children.length; i++) {
 			let child = this.containerEl.children[i];
-			// console.log("wtf", child)
 			if (child.hasClass("modal-bg")) { child.remove() }
 		}
 	}
