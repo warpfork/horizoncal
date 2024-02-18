@@ -56,25 +56,6 @@ export class HorizonCalView extends ItemView {
 
 	eventSources: EventSourceInput[] = [
 		{
-			events: [
-				{
-					title: 'Event1',
-					start: '2024-02-12'
-				},
-				{
-					title: 'Event2',
-					start: '2024-02-12T12:30:00',
-					end: '2024-02-12T13:30:00'
-					// 'background' property is neat.
-				}
-			],
-			color: 'yellow',   // an option!
-			textColor: 'black', // an option!
-
-			startEditable: true,
-			durationEditable: true,
-		},
-		{
 			events: function (info, successCallback, failureCallback) {
 				//console.log("---- queried for", info.start, "through", info.end);
 				// .query({
