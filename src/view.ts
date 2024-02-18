@@ -165,7 +165,7 @@ export class HorizonCalView extends ItemView {
 					// console.log(hcEvt, hcEvt.getCompleteStartDt().toISO());
 					results.push({
 						id: pages[i].file.path,
-						title: hcEvt.title,
+						title: hcEvt.title.valueRaw,
 						// Turn our three-part time+date+timezone info into a single string we'll pass to FullCalendar.
 						// This is going to *lose precision* -- FC can't actually usefully handle the TZ info.
 						// (We'll diligently re-attach and persist TZ data every time we get any info back from FC.)

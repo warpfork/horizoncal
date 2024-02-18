@@ -99,3 +99,7 @@ export function validationOptional<TRaw, TParsed>(fn: ValidationFn<TRaw, TParsed
 		return fn(x)
 	}
 }
+
+export function validateString(x: string): ValidateResult<string, string> {
+	return { parsed: x }
+}

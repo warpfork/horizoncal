@@ -1,5 +1,5 @@
 
-import { Control, ControlOptional, ValidateResult } from "./datacontrol";
+import { Control, ControlOptional, ValidateResult, validateString } from "./datacontrol";
 
 import { DateTime, Duration, IANAZone } from 'luxon';
 
@@ -11,8 +11,8 @@ import { DateTime, Duration, IANAZone } from 'luxon';
 export class HCEvent {
 	static fromFrontmatter(fm: any): HCEvent {
 		let v = new HCEvent();
-		v.title = fm.title;
-		v.evtType = fm.evtType;
+		v.title = new Control("title", validateString).update(fm.title);
+		v.evtType = new Control("evtType", validateString).update(fm.evtType);
 		v.evtDate = new Control("evtDate", validateDate).update(fm.evtDate);
 		v.evtTime = new ControlOptional("evtTime", validateTime).update(fm.evtTime);
 		v.evtTZ = new Control("evtTZ", validateTZ).update(fm.evtTZ);
@@ -49,8 +49,8 @@ export class HCEvent {
 		}
 	}
 
-	title: string;
-	evtType: string;
+	title: Control<string, string>;
+	evtType: Control<string, string>;
 	evtDate: Control<string, DateTime>; // Only contains YMD components.
 	evtTime: ControlOptional<string, Duration>; // Only contains HHmm components.
 	evtTZ: Control<string>; // Named timezome.
