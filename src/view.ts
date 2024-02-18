@@ -374,7 +374,7 @@ export class NewEventModal extends Modal {
 			// (I think that could be done with a sufficiently massive union type,
 			// but I'm not really sure it's worth it :))
 			// (... huh, ends up not mattering, because we successfully only handle raws here.  nice.)
-			prop: Control<string, TParsed>
+			prop: Control<string | undefined, TParsed>
 			name: string
 			desc?: string
 			type: "text" | "date" | "time" | "toggle"
@@ -384,7 +384,7 @@ export class NewEventModal extends Modal {
 			switch (params.type) {
 				case "text":
 					setting.addText((comp) => comp
-						.setValue(params.prop.valueRaw)
+						.setValue(params.prop.valueRaw!)
 						.onChange((value) => {
 							let err = params.prop.tryUpdate(value)
 							if (err) {
@@ -472,7 +472,7 @@ export class NewEventModal extends Modal {
 			type: "time",
 		});
 		widgeteer({
-			prop: this.data.endTZ, // TODO lol the `string | undefined` hits an error here that's... not even wrong, actually.
+			prop: this.data.endTZ,
 			name: "Event End Timezone",
 			type: "text",
 		});
