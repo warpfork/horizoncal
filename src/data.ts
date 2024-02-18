@@ -1,7 +1,113 @@
 
 import { z } from "zod";
 
-import { DateTime, Duration } from 'luxon';
+import { Control, ValidateResult } from "./datacontrol";
+
+import { DateTime, Duration, IANAZone } from 'luxon';
+
+// HCEvent is a holder for event properties.
+//
+// HCEvent just holds data; it is not necessarily data in a valid state.
+// Using HCEvent generally works by dropping frontmatter into it, as strings.
+// Then, you can ask for a validation check.
+export class HCEvent {
+	static fromFrontmatter(fm: any): HCEvent {
+		let v = new HCEvent();
+		v.title = fm.title;
+		v.evtType = fm.evtType;
+		v.evtDate = new Control("evtDate", validateDate).update(fm.evtDate);
+		v.evtTime = new Control("evtTime", validateTime).update(fm.evtTime);
+		v.evtTZ = new Control("evtTZ", validateTZ).update(fm.evtTZ);
+		v.endDate = new Control("endDate", validateDate).update(fm.endDate);
+		v.endTime = new Control("endTime", validateTime).update(fm.endTime);
+		v.endTZ = new Control("endTZ", validateTZ).update(fm.endTZ);
+		v.completed = fm.completed || false;
+		v.cancelled = fm.cancelled || false;
+		return v;
+	}
+
+	// There are still a few higher level validity rules not covered.
+	//
+	// For example, endTZ without an endTime is kinda silly.
+	// However, that exaple also isn't really worth checking because it's never something that deserves user action;
+	// whether we elide that from serialization at the end is a choice local to serializing.
+	//
+	// The basic types of fields we didn't apply Control wrappers to is also currently unchecked.
+	// This could create some funny JS errors, but the UI guides you pretty hard away from it so I just haven't bothered yet.
+	// TODO: this is probably gonna need to change immediately, since we started using Control for mutation attachment too.
+	validate(): Error | undefined {
+		let errors: Error[] = [];
+		this.allControls().forEach((control) => control.foldErrors(errors))
+		if (errors.length == 1) {
+			return errors[0]
+		}
+		if (errors.length > 1) {
+			let estrlist = ""
+			errors.forEach((err) => estrlist += ` - ${err}\n`)
+			return new Error("multiple validation errors:\n" + estrlist)
+		}
+	}
+
+	title: string;
+	evtType: string;
+	evtDate: Control<string, DateTime>; // Only contains YMD components.
+	evtTime: Control<string, Duration>; // Only contains HHmm components.
+	evtTZ: Control<string>; // Named timezome.
+	endDate: Control<string, DateTime | undefined>;
+	endTime: Control<string, Duration | undefined>;
+	endTZ: Control<string | undefined>;
+	completed?: boolean;
+	cancelled?: boolean;
+
+	allControls(): Control<any, any>[] {
+		return [
+			this.evtDate,
+			this.evtTime,
+			this.evtTZ,
+			this.endDate,
+			this.endTime,
+			this.endTZ,
+		]
+	}
+}
+
+function validateDate(ymd: string): ValidateResult<string, DateTime> {
+	const fmt = "yyyy-MM-dd"
+	// You can give an already parsed DT to us if you want,
+	// but imma roundtrip it through string anyway just to make sure anything beyond ymd is dropped.
+	// if (ymd instanceof DateTime) {
+	// 	let str = ymd.toFormat(fmt)
+	// 	return {
+	// 		parsed: DateTime.fromFormat(str, fmt),
+	// 		simplified: str,
+	// 	}
+	// }
+	// NOPE JK, made the type matching harder for no good reason.
+	let parsed = DateTime.fromFormat(ymd, fmt);
+	if (parsed.invalidReason) {
+		return { error: Error(parsed.invalidReason + ": " + parsed.invalidExplanation as string) }
+	}
+	return {
+		parsed: parsed,
+		simplified: parsed.toFormat(fmt),
+	}
+}
+function validateTime(hhmm: string): ValidateResult<string, Duration> {
+	let parsed = DateTime.fromFormat(hhmm, "HH:mm");
+	if (parsed.invalidReason) {
+		return { error: Error(parsed.invalidReason + ": " + parsed.invalidExplanation as string) }
+	}
+	return {
+		parsed: Duration.fromObject({ hour: parsed.hour, minute: parsed.minute }),
+		simplified: parsed.toFormat("HH:mm"),
+	}
+}
+function validateTZ(namedZone: string): ValidateResult<string> {
+	if (IANAZone.isValidZone(namedZone)) {
+		return { parsed: undefined }
+	}
+	return { error: new Error(`"${namedZone}" is not a known time zone identifier`) }
+}
 
 // FIXME: these 'transform' calls a bit cursed because they fail when you return error.
 // I really don't know how to hold Zod well yet.
@@ -36,8 +142,8 @@ const HoursMinutesSchema = z.string().transform(parseTime).pipe(z.object({
 // 
 // So, optional fields are in use.  Any automatic fill-in of values is later, and generally close to the usage site.
 export const HCEventFrontmatterSchema = z.object({
-	evtType: z.string(), // An enum, of sorts, but a user-defined one, so no real validation.
 	title: z.string().default(""),
+	evtType: z.string(), // An enum, of sorts, but a user-defined one, so no real validation.
 	evtDate: YMDSchema,
 	evtTime: HoursMinutesSchema.optional(),
 	evtTZ: z.string().optional(), // Validating this is a WHOLE thing.  It's also not really optional, but I don't want parse to fail early when it's missing.

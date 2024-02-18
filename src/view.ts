@@ -24,7 +24,7 @@ import { getAPI, Literal } from 'obsidian-dataview';
 
 import { DateTime } from 'luxon';
 
-import { HCEventFilePath, HCEventFrontmatter, HCEventFrontmatterSchema } from './data';
+import { HCEvent, HCEventFilePath, HCEventFrontmatterSchema } from './data';
 import HorizonCalPlugin from './main';
 
 export const VIEW_TYPE = "horizoncal-view";
@@ -393,20 +393,21 @@ export class HorizonCalView extends ItemView {
 			selectable: true, // Enables the select callback and related UI.
 			// There are some fun params to this like `selectMinDistance` and `selectMirror`, but so far I don't see the appeal of engaging them.
 			select: (info) => {
-				//alert('selected ' + info.startStr + ' to ' + info.endStr);
 				let startDt = toLuxonDateTime(info.start, this.calUI)
 				let endDt = toLuxonDateTime(info.end, this.calUI)
 
-				// this.leaf.setViewState({ type: "editor", })
-				// this.leaf.open(new MarkdownView(this.leaf))
-				// this.leaf.openFile(this.app.vault.getAbstractFileByPath("sys/horizoncal/demo.md"));
-
-
-				new NewEventModal(this, {
-					evtType: "default",
+				// Invent some initial "frontmatter" and pop open a modal.
+				// The modal will handle further editing, and can persist a new file.
+				new NewEventModal(this, HCEvent.fromFrontmatter({
 					title: "untitled",
-					evtDate: startDt,
-				}).open();
+					evtType: "default",
+					evtDate: startDt.toFormat("yyyy-MM-dd"),
+					evtTime: startDt.toFormat("HH:mm"),
+					evtTZ: startDt.zoneName,
+					endDate: endDt.toFormat("yyyy-MM-dd"),
+					endTime: endDt.toFormat("HH:mm"),
+					endTZ: endDt.zoneName,
+				})).open();
 			},
 		})
 		this.calUI.render()
@@ -419,15 +420,17 @@ export class HorizonCalView extends ItemView {
 }
 
 
+import { Control } from "./datacontrol";
+
 export class NewEventModal extends Modal {
-	constructor(parentView: HorizonCalView, data: HCEventFrontmatter) {
+	constructor(parentView: HorizonCalView, data: HCEvent) {
 		super(parentView.plugin.app);
 		this.data = data;
 		this.parentView = parentView;
 	}
 
 	parentView: HorizonCalView;
-	data: HCEventFrontmatter;
+	data: HCEvent;
 
 	onOpen() {
 		this._defragilify();
@@ -436,48 +439,113 @@ export class NewEventModal extends Modal {
 		let { contentEl } = this;
 		contentEl.createEl("h1", { text: "New event" });
 
-		new Setting(contentEl)
-			.setName("Title")
-			.addText((text) => text
-				.setValue(this.data.title)
-				.onChange((value) => {
-					this.data.title = value
-				}));
+		let widgeteer = <TParsed>(params: {
+			// Consider it constrained that "TParsed as DateTime, when type=='date'".
+			// (I think that could be done with a sufficiently massive union type,
+			// but I'm not really sure it's worth it :))
+			// (... huh, ends up not mattering, because we successfully only handle raws here.  nice.)
+			prop: Control<string, TParsed>
+			name: string
+			desc?: string
+			type: "text" | "date" | "time" | "toggle"
+		}) => {
+			let setting = new Setting(contentEl)
+			setting.setName(params.name)
+			switch (params.type) {
+				case "text":
+					setting.addText((comp) => comp
+						.setValue(params.prop.valueRaw)
+						.onChange((value) => {
+							let err = params.prop.tryUpdate(value)
+							if (err) {
+								// TODO visually highlight as invalid
+							}
+						}));
+					break;
+				case "date":
+					setting.controlEl.createEl("input",
+						// Unfortunate fact about date elements: they use the brower's locale for formatting.
+						// I don't know how to control that in electron.  I don't think it's possible.
+						// (I appreciate the user-choice _concept_ there, but in practice... system locale is a PITA to control and I don't think this plays out in the user's favor in reality.)
+						{ type: "date", value: params.prop.valueRaw },
+						(el) => {
+							el.addEventListener('change', () => {
+								let err = params.prop.tryUpdate(el.value)
+								if (err) {
+									// TODO visually highlight as invalid
+								}
+							});
+						});
+					break;
+				case "time":
+					setting.controlEl.createEl("input",
+						{ type: "time", value: params.prop.valueRaw },
+						(el) => {
+							el.addEventListener('change', () => {
+								let err = params.prop.tryUpdate(el.value)
+								if (err) {
+									// TODO visually highlight as invalid
+								}
+							});
+						});
+					break;
+				case "toggle":
+					break;
+			}
+		};
 
-		new Setting(contentEl)
-			.setName("event type")
-			.addDropdown((droppy) => droppy
-				.addOption("a", "A")
-				.addOption("b", "B"))
-			.addSearch((comp) => comp.setValue("wat"))
-			.addText((text) => text
-				.setValue(this.data.evtType)
-				.onChange((value) => {
-					this.data.evtType = value
-				}));
+		widgeteer({
+			prop: this.data.title, // TODO okay wasn't really planning to Control'ify EVERYTHING but... it makes mutation widget wiring easier too.
+			name: "Title",
+			type: "text",
+		});
 
-		new Setting(contentEl)
-			.setName("date tho").controlEl.innerHTML = '<input type="date">';
+		widgeteer({
+			// Leaving evtType as freetext for now, but
+			// want to introduce a more complex feature here,
+			// probably with a sub-modal.
+			// May also turn into a set that's persisted as comma-sep strings.
+			prop: this.data.evtType, // TODO okay wasn't really planning to Control'ify EVERYTHING but... it makes mutation widget wiring easier too.
+			name: "Event Type",
+			type: "text",
+		});
 
-		((section: HTMLElement) => {
-			// okay, mad science says: don't do this.  It's not mean to be recursive.
-			// the styling is very not set up for it.
-			// you'll be better off doing your own things directly.
-			// ... oh, it's even worse on mobile.  invisible entirely.
-			new Setting(section)
-				.setName("woww")
-				.addToggle((tog) => { });
-			new Setting(section)
-				.setName("shazam")
-				.addToggle((tog) => { });
-			new Setting(section)
-				.setName("zrea")
-				.addText((text) => { });
-			new Setting(section)
-				.setName("zonk")
-				.addToggle((tog) => { });
-		})(new Setting(contentEl)
-			.setName("complx").controlEl)
+		// FUTURE: we might wanna do some custom style around date and time things..
+		// The date related stuff should have reduced borders and margins between them.
+		// (Timezone might also deserve a fold to hide it, but I don't know how to do that with graceful accessibility yet.)
+		// (Timezone might ALSO deserve an autocomplete widget of some kind, but that's also beyond me today.)
+		widgeteer({
+			prop: this.data.evtDate,
+			name: "Event Date",
+			type: "date",
+		});
+		widgeteer({
+			prop: this.data.evtTime,
+			name: "Event Time",
+			type: "time",
+		});
+		widgeteer({
+			prop: this.data.evtTZ,
+			name: "Timezone",
+			type: "text",
+		});
+
+		// And now again, the date and time and zone stuff, for ending.
+		widgeteer({
+			prop: this.data.endDate,
+			name: "Event End Date",
+			type: "date",
+		});
+		widgeteer({
+			prop: this.data.endTime,
+			name: "Event End Time",
+			type: "time",
+		});
+		widgeteer({
+			prop: this.data.endTZ, // TODO lol the `string | undefined` hits an error here that's... not even wrong, actually.
+			name: "Event End Timezone",
+			type: "text",
+		});
 
 		new Setting(contentEl)
 			.addButton(btn => {
