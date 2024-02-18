@@ -22,7 +22,6 @@ import luxonPlugin, { toLuxonDateTime } from '@fullcalendar/luxon3';
 
 import { getAPI, Literal } from 'obsidian-dataview';
 
-import { DateTime } from 'luxon';
 
 import { HCEvent, HCEventFilePath } from './data';
 import HorizonCalPlugin from './main';
@@ -238,81 +237,43 @@ export class HorizonCalView extends ItemView {
 
 			// Step two: we'll use the fileManager to do an update of the frontmatter.
 			// (This handles a lot of serialization shenanigans for us very conveniently.)
-			// (Although I am rather annoyed it doesn't give us control of order.  I *never* want to see the three-part time info separated from each other.)
-			let evtFm2: any;
-			await this.plugin.app.fileManager.processFrontMatter(file, (evtFm: any): void => {
-				// First, shift the dates we got from fullcalendar back into the timezones this event specified.
+			let hcEvt: HCEvent;
+			await this.plugin.app.fileManager.processFrontMatter(file, (fileFm: any): void => {
+				// Parse the existing frontmatter, as a precursor to being ready to save it with modifications.
+				// And also because we need the timezone info.
+				// (Some of this work may be mildly excessive, but it achieves a lot of annealing of data towards convention.)
+				hcEvt = HCEvent.fromFrontmatter(fileFm)
+
+				// TODO some validity checks are appropriate here.
+				// f.eks. if timezone strings aren't valid, this is gonna go south from here.
+
+				// Shift the dates we got from fullcalendar back into the timezones this event specified.
 				//  Fullcalendar doesn't retain timezones -- it flattens everything to an offset only (because javascript Date forces that),
 				//   and it also shifts everything to the calendar-wide tz offset.  This is quite far from what we want.
-				let newStartDt = toLuxonDateTime(info.event.start as Date, this.calUI).setZone(evtFm.evtTZ)
-				let newEndDt = toLuxonDateTime(info.event.end as Date, this.calUI).setZone(evtFm.endTZ || evtFm.evtTZ)
+				let newStartDt = toLuxonDateTime(info.event.start as Date, this.calUI).setZone(hcEvt.evtTZ.valueParsed)
+				console.log("whats", hcEvt.endTZ.valueParsed, hcEvt.evtTZ.valueParsed, hcEvt.endTZ.valueParsed || hcEvt.evtTZ.valueParsed)
+				let newEndDt = toLuxonDateTime(info.event.end as Date, this.calUI).setZone(hcEvt.endTZ.valueParsed || hcEvt.evtTZ.valueParsed)
 
-				// Now start modifying the frontmatter...
-				// And kick this off in an odd way: because we want to control order,
-				// we're going to nuke every property and put them back in again.
-				// We'll keep an object on the side with a copy of the originals,
-				// then merge back any remaining properties that aren't ours at the end.
-				// This dance creates stable ordering (and shifts user content to the bottom).
-				let refFm = Object.assign({}, evtFm);
-				for (var prop in evtFm) {
-					delete evtFm[prop]
-				}
+				// Stir our updated dates into the data.
+				// This roundtrips things through strings, which... may seem unnecessary?
+				// But on the other hand, that's what we really store, and being literal is good.
+				// (Also, I was too lazy to introudce a "setParsed" system to Control; it would require an alternative simplify func, and how we're building the whole magma burrito family; no.)
+				hcEvt.evtDate.update(newStartDt.toFormat("yyyy-MM-dd"))
+				hcEvt.evtTime.update(newStartDt.toFormat("HH:mm"))
+				hcEvt.endDate.update(newEndDt.toFormat("yyyy-MM-dd"))
+				hcEvt.endTime.update(newEndDt.toFormat("HH:mm"))
 
-				// Copy the most essential traits, like title and type!
-				evtFm.title = refFm.title
-				evtFm.evtType = refFm.evtType
-				// The start date is always written!
-				evtFm.evtDate = newStartDt.toFormat("yyyy-MM-dd")
-				// The start time should only be written if it was there before, or if it's now nonzero.
-				// (All day events have zero here, and should have stored no time.)
-				if (refFm.evtTime || newStartDt.hour != 0 || newStartDt.minute != 0) {
-					evtFm.evtTime = newStartDt.toFormat("HH:mm")
-				}
-				// Copy the TZ.
-				// Or if it didn't exist: it does now!
-				// (Right now, this just uses the local zone; future work is to use our own tzch events as cues.)
-				evtFm.evtTZ = (refFm.evtTZ || DateTime.local().zoneName);
-				// Write the end date only if it's different than the start date.
-				if (newStartDt.year != newEndDt.year || newStartDt.month != newEndDt.month || newStartDt.day != newEndDt.day) {
-					evtFm.endDate = newEndDt.toFormat("yyyy-MM-dd")
-				}
-				// As with start time: the end time should only be written if it was there before, or if it's now nonzero.
-				// (All day events have zero here, and should have stored no time.)
-				if (refFm.endTime || newEndDt.hour != 0 || newEndDt.minute != 0) {
-					evtFm.endTime = newEndDt.toFormat("HH:mm")
-				}
-				// Copy the TZ, if it existed.
-				if (refFm.endTZ) {
-					evtFm.endTZ = refFm.endTZ
-				}
-				// Copy our other known but optional properties, if they existed.
-				// (Be careful with equality here, as some of these are bools.)
-				if (refFm.allDay !== undefined) {
-					evtFm.allDay = refFm.allDay
-				}
-				if (refFm.completed !== undefined) {
-					evtFm.completed = refFm.completed
-				}
-
-				// Now copy over any remaining properties in the original.
-				// This is part of the dance to control property orders.
-				for (var prop in refFm) {
-					if (!(prop in evtFm)) {
-						evtFm[prop] = refFm[prop]
-					}
-				}
+				// Now foist the event structure back into frontmatter form... mutating the object we started with.
+				hcEvt.foistFrontmatter(fileFm);
 
 				// Persistence?
 				// It's handled magically by processFrontMatter as soon as this callback returns:
-				//  it persists our mutations to the argument.
-
-				// But we also keep this value because we need it in a moment to consider the file's path, as well.
-				evtFm2 = refFm;
+				//  it persists our mutations to the `fileFm` argument.
 			});
 
 			// Step three: decide if the filename is still applicable or needs to change -- and possibly change it!
 			// If we change the filename, we'll also change the event ID.
-			let path = HCEventFilePath.fromFrontmatter(evtFm2);
+			let path = HCEventFilePath.fromEvent(hcEvt);
 			let wholePath = path.wholePath;
 			if (wholePath != info.event.id) {
 				console.log("moving to", wholePath)

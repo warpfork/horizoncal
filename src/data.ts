@@ -15,7 +15,7 @@ export class HCEvent {
 		v.evtType = new Control("evtType", validateString).update(fm.evtType);
 		v.evtDate = new Control("evtDate", validateDate).update(fm.evtDate);
 		v.evtTime = new ControlOptional("evtTime", validateTime).update(fm.evtTime);
-		v.evtTZ = new Control("evtTZ", validateTZ).update(fm.evtTZ);
+		v.evtTZ = new Control("evtTZ", validateTZ_defaultLocal).update(fm.evtTZ);
 		v.endDate = new ControlOptional("endDate", validateDate).update(fm.endDate);
 		v.endTime = new ControlOptional("endTime", validateTime).update(fm.endTime);
 		v.endTZ = new ControlOptional("endTZ", validateTZ).update(fm.endTZ);
@@ -53,15 +53,17 @@ export class HCEvent {
 	evtType: Control<string, string>;
 	evtDate: Control<string, DateTime>; // Only contains YMD components.
 	evtTime: ControlOptional<string, Duration>; // Only contains HHmm components.
-	evtTZ: Control<string>; // Named timezome.
+	evtTZ: Control<string | undefined, string>; // Named timezome.
 	endDate: ControlOptional<string, DateTime>;
 	endTime: ControlOptional<string, Duration>;
-	endTZ: ControlOptional<string>;
+	endTZ: ControlOptional<string, string>;
 	completed?: boolean;
 	cancelled?: boolean;
 
 	allControls(): Control<any, any>[] {
 		return [
+			this.title,
+			this.evtType,
 			this.evtDate,
 			this.evtTime,
 			this.evtTZ,
@@ -73,7 +75,7 @@ export class HCEvent {
 
 	// Returns a complete DateTime with the date, the time, and the timezone assembled.
 	getCompleteStartDt(): DateTime {
-		return this.evtDate.valueParsed.plus(this.evtTime.valueParsed!).setZone(this.evtTZ.valueRaw, {keepLocalTime: true})
+		return this.evtDate.valueParsed.plus(this.evtTime.valueParsed!).setZone(this.evtTZ.valueRaw, { keepLocalTime: true })
 	}
 
 	// Returns a complete DateTime with the date, the time, and the timezone assembled.
@@ -82,14 +84,71 @@ export class HCEvent {
 		let v = this.evtDate.valueParsed;
 		v = (this.endDate.valueParsed) ? this.endDate.valueParsed : v;
 		v = v.plus(this.endTime.valueParsed!);
-		v = (this.endTZ.valueRaw) ? v.setZone(this.endTZ.valueRaw, {keepLocalTime: true}) : v.setZone(this.evtTZ.valueRaw, {keepLocalTime: true});
+		v = (this.endTZ.valueRaw) ? v.setZone(this.endTZ.valueRaw, { keepLocalTime: true }) : v.setZone(this.evtTZ.valueRaw, { keepLocalTime: true });
 		return v;
+	}
+
+	// Mutate (!) the given object to contain our data.
+	// Rebuilds the entire object so that the ordering is controlled,
+	// but unfamiliar fields will be retained (just moved to the bottom).
+	// Any of our own data that's redundant (such as and endDate that's the same as the start) are removed.
+	//
+	// The same object is also returned for convenience,
+	// and the initial object can be elided if you have no data to persist.
+	foistFrontmatter(fm: any = {}): any {
+		// Kick off with a copy of any fields we don't recognize.
+		// To control order, we're going to nuke every property in the given object and put them back in again.
+		// We'll keep this object on the side with a copy of the original data,
+		// then merge back any remaining properties that aren't ours at the end.
+		// This dance creates stable ordering (and shifts user content to the bottom).
+		let copy: any = {};
+		for (var prop in fm) {
+			if (!(prop in this)) {
+				copy[prop] = fm[prop];
+			}
+			delete fm[prop];
+		}
+
+		// Storing properties got surprisingly generalized.
+		//
+		// Two corners are currently rounded off, here:
+		//  - Quietly forgetting about those bools we didn't migrate to Control yet.  Not sure if keeping them at all.
+		//  - Haven't handled any of the optionality of times for all-day events.
+		this.allControls().forEach((control) => {
+			// Handle the special cases where the value doesn't get persisted.
+			switch (control.name) {
+				case "endDate":
+					// Skip storing this, even if it exists, if it's the same as the start date.
+					if (!this.endDate.valueParsed) {
+						return
+					}
+					if (this.evtDate.valueParsed.year == this.endDate.valueParsed.year
+						&& this.evtDate.valueParsed.month == this.endDate.valueParsed.month
+						&& this.evtDate.valueParsed.day == this.endDate.valueParsed.day) {
+						return
+					}
+					break;
+			}
+
+			// For everyone that got here: yep, be saved.
+			if (control.isValid) {
+				fm[control.name] = control.valueRaw
+			}
+		})
+
+		// Now copy over any remaining properties in the original.
+		// This is part of the dance to control property orders.
+		for (var prop in copy) {
+			if (!(prop in fm)) {
+				fm[prop] = copy[prop]
+			}
+		}
 	}
 }
 
 function validateDate(ymd: string): ValidateResult<string, DateTime> {
 	const fmt = "yyyy-MM-dd"
-	ymd+=""; // Violently coerce to string.
+	ymd += ""; // Violently coerce to string.
 	let parsed = DateTime.fromFormat(ymd, fmt);
 	if (parsed.invalidReason) {
 		return { error: new Error(parsed.invalidReason + ": " + parsed.invalidExplanation as string) }
@@ -109,65 +168,29 @@ function validateTime(hhmm: string): ValidateResult<string, Duration> {
 		simplified: parsed.toFormat("HH:mm"),
 	}
 }
-function validateTZ(namedZone: string): ValidateResult<string> {
+function validateTZ(namedZone: string): ValidateResult<string, string> {
 	if (IANAZone.isValidZone(namedZone)) {
-		return { parsed: undefined }
+		return { parsed: namedZone }
 	}
 	return { error: new Error(`"${namedZone}" is not a known time zone identifier`) }
 }
-
-/*-----------------------------------------*/
-/* And now for somewhat more cursed stuff. */
-
-function parseYMD(ymd: string): DateTime | { error: Error } {
-	let parsed = DateTime.fromFormat(ymd, "yyyy-MM-dd");
-	if (parsed.invalidReason) {
-		return { error: Error(parsed.invalidReason + ": " + parsed.invalidExplanation as string) }
+function validateTZ_defaultLocal(namedZone: string | undefined): ValidateResult<string | undefined, string> {
+	if (!namedZone) {
+		let zn = DateTime.local().zoneName;
+		return { parsed: zn, simplified: zn }
 	}
-	//return {year: parsed.year, month: parsed.month, day: parsed.day}
-	return parsed
-}
-
-// Parse a string containing hours and minutes (and maybe even seconds)
-// into a Luxon Duration with hours and minutes.
-function parseTime(time: string): Duration {
-	let parsed = DateTime.fromFormat(time, "h:mm a");
-	if (parsed.invalidReason) {
-		parsed = DateTime.fromFormat(time, "HH:mm");
-	}
-	if (parsed.invalidReason) {
-		parsed = DateTime.fromFormat(time, "HH:mm:ss");
-	}
-	if (parsed.invalidReason) {
-		// If you manage to be completely inscrutable, I'm rounding you to 15 minutes.  Zero is worse.
-		return Duration.fromObject({ hours: 0, minutes: 15 });
-	}
-	return Duration.fromObject({ hours: parsed.hour, minutes: parsed.minute });
-};
-
-function slugify(str: string): string {
-	return String(str)
-		.normalize('NFKD') // split accented characters into their base characters and diacritical marks
-		.replace(/[\u0300-\u036f]/g, '') // remove all the accents, which happen to be all in the \u03xx UNICODE block.
-		.trim() // trim leading or trailing whitespace
-		.replace(/[^a-zA-Z0-9 -]/g, '') // remove non-alphanumeric characters
-		.replace(/\s+/g, '-') // replace spaces with hyphens
-		.replace(/-+/g, '-'); // remove consecutive hyphens
+	return validateTZ(namedZone)
 }
 
 /*-------------------------------------------------------------*/
 /* File paths show up enough that they're worth a helper type. */
 
 export class HCEventFilePath {
-	static fromFrontmatter(evtFm: any): HCEventFilePath {
-		let dt = parseYMD(evtFm.evtDate);
-		if ("error" in dt) {
-			dt = DateTime.local(0, 0, 0, 0, 0, 0)
-		}
+	static fromEvent(hcEvt: HCEvent): HCEventFilePath {
 		return new HCEventFilePath({
-			dirs: dt.toFormat("yyyy/MM/dd"),
-			fprefix: "evt-" + dt.toFormat("yyyy-MM-dd"),
-			slug: slugify(evtFm.title),
+			dirs: hcEvt.evtDate.valueParsed.toFormat("yyyy/MM/dd"),
+			fprefix: "evt-" + hcEvt.evtDate.valueRaw,
+			slug: slugify(hcEvt.title.valueRaw),
 		})
 	}
 
@@ -183,4 +206,14 @@ export class HCEventFilePath {
 		return this.dirs + "/" + this.fprefix + "--" + this.slug + ".md"
 	}
 
+}
+
+function slugify(str: string): string {
+	return String(str)
+		.normalize('NFKD') // split accented characters into their base characters and diacritical marks
+		.replace(/[\u0300-\u036f]/g, '') // remove all the accents, which happen to be all in the \u03xx UNICODE block.
+		.trim() // trim leading or trailing whitespace
+		.replace(/[^a-zA-Z0-9 -]/g, '') // remove non-alphanumeric characters
+		.replace(/\s+/g, '-') // replace spaces with hyphens
+		.replace(/-+/g, '-'); // remove consecutive hyphens
 }
