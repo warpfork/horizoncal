@@ -1,7 +1,5 @@
 
-import { z } from "zod";
-
-import { Control, ValidateResult } from "./datacontrol";
+import { Control, ControlOptional, ValidateResult } from "./datacontrol";
 
 import { DateTime, Duration, IANAZone } from 'luxon';
 
@@ -16,11 +14,11 @@ export class HCEvent {
 		v.title = fm.title;
 		v.evtType = fm.evtType;
 		v.evtDate = new Control("evtDate", validateDate).update(fm.evtDate);
-		v.evtTime = new Control("evtTime", validateTime).update(fm.evtTime);
+		v.evtTime = new ControlOptional("evtTime", validateTime).update(fm.evtTime);
 		v.evtTZ = new Control("evtTZ", validateTZ).update(fm.evtTZ);
-		v.endDate = new Control("endDate", validateDate).update(fm.endDate);
-		v.endTime = new Control("endTime", validateTime).update(fm.endTime);
-		v.endTZ = new Control("endTZ", validateTZ).update(fm.endTZ);
+		v.endDate = new ControlOptional("endDate", validateDate).update(fm.endDate);
+		v.endTime = new ControlOptional("endTime", validateTime).update(fm.endTime);
+		v.endTZ = new ControlOptional("endTZ", validateTZ).update(fm.endTZ);
 		v.completed = fm.completed || false;
 		v.cancelled = fm.cancelled || false;
 		return v;
@@ -35,6 +33,9 @@ export class HCEvent {
 	// The basic types of fields we didn't apply Control wrappers to is also currently unchecked.
 	// This could create some funny JS errors, but the UI guides you pretty hard away from it so I just haven't bothered yet.
 	// TODO: this is probably gonna need to change immediately, since we started using Control for mutation attachment too.
+	//
+	// There's also the small matter cross-field checks like "is the end actually after the beginning?".
+	// Those aren't handled yet either.
 	validate(): Error | undefined {
 		let errors: Error[] = [];
 		this.allControls().forEach((control) => control.foldErrors(errors))
@@ -51,11 +52,11 @@ export class HCEvent {
 	title: string;
 	evtType: string;
 	evtDate: Control<string, DateTime>; // Only contains YMD components.
-	evtTime: Control<string, Duration>; // Only contains HHmm components.
+	evtTime: ControlOptional<string, Duration>; // Only contains HHmm components.
 	evtTZ: Control<string>; // Named timezome.
-	endDate: Control<string, DateTime | undefined>;
-	endTime: Control<string, Duration | undefined>;
-	endTZ: Control<string | undefined>;
+	endDate: ControlOptional<string, DateTime>;
+	endTime: ControlOptional<string, Duration>;
+	endTZ: ControlOptional<string>;
 	completed?: boolean;
 	cancelled?: boolean;
 
@@ -69,23 +70,29 @@ export class HCEvent {
 			this.endTZ,
 		]
 	}
+
+	// Returns a complete DateTime with the date, the time, and the timezone assembled.
+	getCompleteStartDt(): DateTime {
+		return this.evtDate.valueParsed.plus(this.evtTime.valueParsed!).setZone(this.evtTZ.valueRaw, {keepLocalTime: true})
+	}
+
+	// Returns a complete DateTime with the date, the time, and the timezone assembled.
+	// This function handles defaulting to the start day and start timezone.
+	getCompleteEndDt(): DateTime {
+		let v = this.evtDate.valueParsed;
+		v = (this.endDate.valueParsed) ? this.endDate.valueParsed : v;
+		v = v.plus(this.endTime.valueParsed!);
+		v = (this.endTZ.valueRaw) ? v.setZone(this.endTZ.valueRaw, {keepLocalTime: true}) : v.setZone(this.evtTZ.valueRaw, {keepLocalTime: true});
+		return v;
+	}
 }
 
 function validateDate(ymd: string): ValidateResult<string, DateTime> {
 	const fmt = "yyyy-MM-dd"
-	// You can give an already parsed DT to us if you want,
-	// but imma roundtrip it through string anyway just to make sure anything beyond ymd is dropped.
-	// if (ymd instanceof DateTime) {
-	// 	let str = ymd.toFormat(fmt)
-	// 	return {
-	// 		parsed: DateTime.fromFormat(str, fmt),
-	// 		simplified: str,
-	// 	}
-	// }
-	// NOPE JK, made the type matching harder for no good reason.
+	ymd+=""; // Violently coerce to string.
 	let parsed = DateTime.fromFormat(ymd, fmt);
 	if (parsed.invalidReason) {
-		return { error: Error(parsed.invalidReason + ": " + parsed.invalidExplanation as string) }
+		return { error: new Error(parsed.invalidReason + ": " + parsed.invalidExplanation as string) }
 	}
 	return {
 		parsed: parsed,
@@ -108,53 +115,6 @@ function validateTZ(namedZone: string): ValidateResult<string> {
 	}
 	return { error: new Error(`"${namedZone}" is not a known time zone identifier`) }
 }
-
-// FIXME: these 'transform' calls a bit cursed because they fail when you return error.
-// I really don't know how to hold Zod well yet.
-//
-// ... it's fine matching the object rules on luxon's types, which is interesting.
-// it also removes the additional code and data, which I guess makes sense.
-
-const YMDSchema = z.string().transform((val, ctx) => {
-	let parsed = parseYMD(val)
-	if ("error" in parsed) {
-		ctx.addIssue({
-			code: z.ZodIssueCode.invalid_date,
-			message: parsed.error.message,
-		});
-		return z.NEVER;
-	}
-	return parsed;
-}).pipe(z.object({  // These are functionally already validate by the transform!  But it still has the effect of allow-listing the values.
-	year: z.number().int().gte(1000).lte(9999),
-	month: z.number().int().gte(1).lte(12),
-	day: z.number().int().gte(1).lte(31),
-}))
-
-const HoursMinutesSchema = z.string().transform(parseTime).pipe(z.object({
-	hours: z.number().int().gte(0),
-	minutes: z.number().int().gte(0).lte(59),
-}))
-
-// This is the schema for the frontmatter, as it is serialized...
-// but with a LITTLE bit of date parsing, powered by a combo of full date library usage, and then zod reducing it again.
-// (I have no idea if this is particularly sane, but I ended up with this code path working for now, so, uh, okay, let's roll.)
-// 
-// So, optional fields are in use.  Any automatic fill-in of values is later, and generally close to the usage site.
-export const HCEventFrontmatterSchema = z.object({
-	title: z.string().default(""),
-	evtType: z.string(), // An enum, of sorts, but a user-defined one, so no real validation.
-	evtDate: YMDSchema,
-	evtTime: HoursMinutesSchema.optional(),
-	evtTZ: z.string().optional(), // Validating this is a WHOLE thing.  It's also not really optional, but I don't want parse to fail early when it's missing.
-	endDate: YMDSchema.optional(),
-	endTime: HoursMinutesSchema.optional(),
-	endTZ: z.string().optional(),
-	completed: z.boolean().optional(),
-	cancelled: z.boolean().optional(),
-});
-export type HCEventFrontmatter = z.infer<typeof HCEventFrontmatterSchema>;
-
 
 /*-----------------------------------------*/
 /* And now for somewhat more cursed stuff. */

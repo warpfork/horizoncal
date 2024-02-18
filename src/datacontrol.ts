@@ -26,7 +26,7 @@
 // so that it can be used for metaprogramming.
 // It will also be used as part of error messages when using error aggregation helper functions.
 export class Control<TRaw, TParsed = undefined> {
-	constructor(name: string, validateFn: (x: TRaw) => ValidateResult<TRaw, TParsed>) {
+	constructor(name: string, validateFn: ValidationFn<TRaw, TParsed>) {
 		this.name = name
 		this.validateFn = validateFn
 	}
@@ -83,3 +83,19 @@ export type ValidateResult<TRaw, TParsed = undefined> =
 	{ error: Error } |
 	{ parsed: TParsed, error?: Error, simplified?: TRaw };
 
+export type ValidationFn<TRaw, TParsed> = (x: TRaw) => ValidateResult<TRaw, TParsed>
+
+export class ControlOptional<TRaw, TParsed = undefined> extends Control<TRaw | undefined, TParsed | undefined> {
+	constructor(name: string, validateFn: ValidationFn<TRaw, TParsed>) {
+		super(name, validationOptional(validateFn))
+	}
+}
+
+export function validationOptional<TRaw, TParsed>(fn: ValidationFn<TRaw, TParsed>): ValidationFn<TRaw | undefined, TParsed | undefined> {
+	return function (x: TRaw | undefined): ValidateResult<TRaw | undefined, TParsed | undefined> {
+		if (x === undefined) {
+			return { parsed: undefined, simplified: undefined }
+		}
+		return fn(x)
+	}
+}

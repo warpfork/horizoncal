@@ -24,7 +24,7 @@ import { getAPI, Literal } from 'obsidian-dataview';
 
 import { DateTime } from 'luxon';
 
-import { HCEvent, HCEventFilePath, HCEventFrontmatterSchema } from './data';
+import { HCEvent, HCEventFilePath } from './data';
 import HorizonCalPlugin from './main';
 
 export const VIEW_TYPE = "horizoncal-view";
@@ -151,28 +151,26 @@ export class HorizonCalView extends ItemView {
 						continue
 					}
 
-					// Use Zod to do a lot more validation.
-					const evtFmValidation = HCEventFrontmatterSchema.safeParse(evtFmRaw);
-					if (!evtFmValidation.success) {
+					// Use HCEvent to do a parse.
+					// An HCEvent is something you can produce unconditionally:
+					// it just might contain data that's flagged as not valid.
+					let hcEvt = HCEvent.fromFrontmatter(evtFmRaw);
+					let hcEvtErr = hcEvt.validate();
+					if (hcEvtErr) {
 						// TODO use filemanager.processFrontMatter to write an "hcerror" field with message.
-						console.log("conversion error:", evtFmValidation.error);
+						console.log("conversion error:", hcEvtErr);
 						continue
 					}
-					let evtFm = evtFmValidation.data;
-					// console.log("evtFm ->", evtFm);
 
-					// Turn our three-part time+date+timezone info into a single string we'll pass to FullCalendar.
-					// This is going to *lose precision* -- FC can't actually usefully handle the TZ info.
-					// (We'll diligently re-attach and persist TZ data every time we get any info back from FC.)
-					let startDt = DateTime.fromObject({ ...evtFm.evtDate, ...evtFm.evtTime }, { zone: evtFm.evtTZ });
-					let endDt = DateTime.fromObject({ ... (evtFm.endDate || evtFm.evtDate), ...evtFm.endTime }, { zone: evtFm.endTZ || evtFm.evtTZ });
-					// TODO we do need to validate the zones were accepted here.  (Everything else should already be covered.)
-
+					// console.log(hcEvt, hcEvt.getCompleteStartDt().toISO());
 					results.push({
 						id: pages[i].file.path,
-						title: evtFm.title,
-						start: startDt.toISO() as string,
-						end: endDt.toISO() as string,
+						title: hcEvt.title,
+						// Turn our three-part time+date+timezone info into a single string we'll pass to FullCalendar.
+						// This is going to *lose precision* -- FC can't actually usefully handle the TZ info.
+						// (We'll diligently re-attach and persist TZ data every time we get any info back from FC.)
+						start: hcEvt.getCompleteStartDt().toISO() as string,
+						end: hcEvt.getCompleteEndDt().toISO() as string,
 					})
 					//console.log("and that made?  this:", results.last())
 				}

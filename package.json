@@ -29,7 +29,6 @@
 		"@fullcalendar/core": "^6.1.10",
 		"@fullcalendar/interaction": "^6.1.10",
 		"@fullcalendar/list": "^6.1.10",
-		"@fullcalendar/timegrid": "^6.1.10",
-		"zod": "^3.22.4"
+		"@fullcalendar/timegrid": "^6.1.10"
 	}
 }
