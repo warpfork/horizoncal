@@ -19,8 +19,6 @@ export class HCEvent {
 		v.endDate = new ControlOptional("endDate", validateDate).update(fm.endDate);
 		v.endTime = new ControlOptional("endTime", validateTime).update(fm.endTime);
 		v.endTZ = new ControlOptional("endTZ", validateTZ).update(fm.endTZ);
-		v.completed = fm.completed || false;
-		v.cancelled = fm.cancelled || false;
 		return v;
 	}
 
@@ -57,8 +55,6 @@ export class HCEvent {
 	endDate: ControlOptional<string, DateTime>;
 	endTime: ControlOptional<string, Duration>;
 	endTZ: ControlOptional<string, string>;
-	completed?: boolean;
-	cancelled?: boolean;
 
 	allControls(): Control<any, any>[] {
 		return [
