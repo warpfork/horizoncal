@@ -3,6 +3,7 @@ import {
 	Menu,
 	Modal,
 	Setting,
+	TAbstractFile,
 	TFile,
 	WorkspaceLeaf
 } from 'obsidian';
@@ -169,6 +170,31 @@ export class HorizonCalView extends ItemView {
 		this.viewContentEl.createEl("h4", { text: "Horizon Calendar" });
 		this.calUIEl = this.viewContentEl.createEl("div", { cls: "horizoncal" });
 		this._doCal();
+		this.registerEvent(this.app.vault.on("rename", (file: TAbstractFile, oldPath: string) => {
+			console.log("rename event!")
+			// this._doCal();
+		}));
+		this.registerEvent(this.app.vault.on("create", (file: TAbstractFile) => {
+			console.log("create event!")
+			// this._doCal();
+		}));
+		this.registerEvent(this.app.vault.on("delete", (file: TAbstractFile) => {
+			console.log("delete event!")
+			// this._doCal();
+		}));
+		this.registerEvent(this.app.vault.on("modify", (file: TAbstractFile) => {
+			console.log("modify event!")
+			// this._doCal();
+		}));
+		// Turns out that if we're using dataview to load things, hooking anything _other than_ dataview is worse than useless,
+		// because in any other hook we're probably going to get stale data from querying dataview.  I understand why but wow what a delight.
+		// I think we're approaching a Decision Point for whether dataview is a _hard_ dependency of HorizonCal, or we do some other work ourselves.
+		this.registerEvent(this.app.metadataCache.on("dataview:metadata-change",
+			(type, file, oldPath?) => {
+				console.log("dataview change!")
+				this._doCal();
+			}
+		))
 	}
 
 	async onPaneMenu(menu: Menu) {
