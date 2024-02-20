@@ -31,6 +31,8 @@ const context = await esbuild.context({
 		"@lezer/common",
 		"@lezer/highlight",
 		"@lezer/lr",
+		"obsidian-dataview",
+		"luxon",
 		...builtins],
 	format: "cjs",
 	target: "es2018",
