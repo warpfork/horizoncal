@@ -251,7 +251,7 @@ export class HorizonCalView extends ItemView {
 
 			// Step three: decide if the filename is still applicable or needs to change -- and possibly change it!
 			// If we change the filename, we'll also change the event ID.
-			let path = HCEventFilePath.fromEvent(hcEvt);
+			let path = HCEventFilePath.fromEvent(hcEvt!);
 			let wholePath = path.wholePath;
 			if (wholePath != info.event.id) {
 				console.log("moving to", wholePath)
