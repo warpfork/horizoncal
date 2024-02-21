@@ -56,6 +56,8 @@ export class HCEvent {
 	endTime: ControlOptional<string, Duration>;
 	endTZ: ControlOptional<string, string>;
 
+	loadedFrom?: string; // Optionally, a record of the path this was loaded from.  (Doesn't mean it's where this *should* be stored!)
+
 	allControls(): Control<any, any>[] {
 		return [
 			this.title,

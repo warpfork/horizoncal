@@ -11,7 +11,7 @@ import {
 	Calendar,
 	EventDropArg,
 	EventInput,
-	EventSourceInput
+	EventSourceInput,
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin, { EventResizeDoneArg } from '@fullcalendar/interaction';
@@ -20,9 +20,8 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 
 import luxonPlugin, { toLuxonDateTime } from '@fullcalendar/luxon3';
 
-import { getAPI, Literal } from 'obsidian-dataview';
-
 import { HCEvent, HCEventFilePath } from '../data/data';
+import { loadRange } from '../data/loading';
 import HorizonCalPlugin from '../main';
 import { NewEventModal } from './eventmodal';
 
@@ -56,53 +55,21 @@ export class HorizonCalView extends ItemView {
 
 	eventSources: EventSourceInput[] = [
 		{
-			events: function (info, successCallback, failureCallback) {
-				//console.log("---- queried for", info.start, "through", info.end);
-				// .query({
-				// 	start: info.start.valueOf(),
-				// 	end: info.end.valueOf()
-				// })
-
-				type DVT_Record = Record<string, Literal> & { file: TFile };
-				const dv = getAPI();
-				const pages = dv.pages('"sys/horizoncal"')
-					.where((p: DVT_Record) => String(p.file.name).startsWith("evt-"))
-
-				let results: EventInput[] = []
-				for (let i in pages.array()) {
-					// We're gonna read the frontmatter because it's least wild.
-					let evtFmRaw = pages[i].file.frontmatter
-
-					// Quick check first.
-					if (!evtFmRaw["evtDate"]) {
-						// TODO use filemanager.processFrontMatter to write an "hcerror" field with message.
-						continue
-					}
-
-					// Use HCEvent to do a parse.
-					// An HCEvent is something you can produce unconditionally:
-					// it just might contain data that's flagged as not valid.
-					let hcEvt = HCEvent.fromFrontmatter(evtFmRaw);
-					let hcEvtErr = hcEvt.validate();
-					if (hcEvtErr) {
-						// TODO use filemanager.processFrontMatter to write an "hcerror" field with message.
-						console.log("conversion error:", hcEvtErr);
-						continue
-					}
-
+			events: (info, successCallback, failureCallback) => {
+				let hcEvts = loadRange("sys/horizoncal", toLuxonDateTime(info.start, this.calUI), toLuxonDateTime(info.end, this.calUI));
+				let fcEvts = hcEvts.map((hcEvt): EventInput => {
 					// console.log(hcEvt, hcEvt.getCompleteStartDt().toISO());
-					results.push({
-						id: pages[i].file.path,
+					return {
+						id: hcEvt.loadedFrom,
 						title: hcEvt.title.valueRaw,
 						// Turn our three-part time+date+timezone info into a single string we'll pass to FullCalendar.
 						// This is going to *lose precision* -- FC can't actually usefully handle the TZ info.
 						// (We'll diligently re-attach and persist TZ data every time we get any info back from FC.)
 						start: hcEvt.getCompleteStartDt().toISO() as string,
 						end: hcEvt.getCompleteEndDt().toISO() as string,
-					})
-				}
-
-				successCallback(results)
+					}
+				})
+				successCallback(fcEvts)
 				//console.log("---- query journey ended")
 				return null
 			},
@@ -302,7 +269,6 @@ export class HorizonCalView extends ItemView {
 			// the 'scrollToTime' method might also be the right thing.
 			scrollTimeReset: false,
 			height: "auto",
-			eventSources: this.eventSources,
 			businessHours: {
 				daysOfWeek: [1, 2, 3, 4, 5],
 				startTime: '09:00',
@@ -351,6 +317,7 @@ export class HorizonCalView extends ItemView {
 				})).open();
 			},
 		})
+		this.eventSources.map((evtSrc) => this.calUI.addEventSource(evtSrc))
 		this.calUI.render()
 	}
 }
