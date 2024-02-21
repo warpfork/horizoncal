@@ -12,9 +12,11 @@ import HorizonCalPlugin from "../main";
 export class NewEventModal extends Modal {
 	constructor(plugin: HorizonCalPlugin, data: HCEvent) {
 		super(plugin.app);
+		this.plugin = plugin;
 		this.data = data;
 	}
 
+	plugin: HorizonCalPlugin;
 	data: HCEvent;
 
 	onOpen() {
@@ -182,7 +184,7 @@ export class NewEventModal extends Modal {
 
 		let path = HCEventFilePath.fromEvent(this.data);
 
-		let file = await this.app.vault.create("sys/horizoncal/" + path.wholePath, "")
+		let file = await this.app.vault.create(`${this.plugin.settings.prefixPath}/${path.wholePath}`, "")
 
 		await this.app.fileManager.processFrontMatter(file, (fileFm: any): void => {
 			this.data.foistFrontmatter(fileFm);

@@ -234,10 +234,10 @@ export class HorizonCalView extends ItemView {
 				try {
 					// Wrapped in a `try` because it throws on "already exists".
 					// TODO bother to react better to other errors.
-					await this.plugin.app.vault.createFolder("sys/horizoncal/" + path.dirs)
+					await this.plugin.app.vault.createFolder(`${this.plugin.settings.prefixPath}/${path.dirs}`)
 				} catch { }
-				await this.plugin.app.fileManager.renameFile(file, "sys/horizoncal/" + wholePath)
-				info.event.setProp("id", "sys/horizoncal/" + wholePath)
+				await this.plugin.app.fileManager.renameFile(file, `${this.plugin.settings.prefixPath}/${wholePath}`)
+				info.event.setProp("id", `${this.plugin.settings.prefixPath}/${wholePath}`) // FIXME canonicalization check, double slash would be bad here.
 			}
 		}
 
