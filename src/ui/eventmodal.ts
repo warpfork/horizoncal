@@ -23,7 +23,8 @@ export class NewEventModal extends Modal {
 		this._defragilify();
 		this._style();
 
-		let { contentEl } = this;
+		let { contentEl, containerEl } = this;
+		containerEl.addClass("horizoncal");
 		contentEl.createEl("h1", { text: "New event" });
 
 		let widgeteer = <TParsed>(params: {
@@ -44,9 +45,7 @@ export class NewEventModal extends Modal {
 						.setValue(params.prop.valueRaw!)
 						.onChange((value) => {
 							let err = params.prop.tryUpdate(value)
-							if (err) {
-								// TODO visually highlight as invalid
-							}
+							comp.inputEl.toggleClass("invalid", !!err)
 						}));
 					break;
 				case "date":
@@ -58,9 +57,7 @@ export class NewEventModal extends Modal {
 						(el) => {
 							el.addEventListener('change', () => {
 								let err = params.prop.tryUpdate(el.value)
-								if (err) {
-									// TODO visually highlight as invalid
-								}
+								el.toggleClass("invalid", !!err)
 							});
 						});
 					break;
@@ -70,9 +67,7 @@ export class NewEventModal extends Modal {
 						(el) => {
 							el.addEventListener('change', () => {
 								let err = params.prop.tryUpdate(el.value)
-								if (err) {
-									// TODO visually highlight as invalid
-								}
+								el.toggleClass("invalid", !!err)
 							});
 						});
 					break;

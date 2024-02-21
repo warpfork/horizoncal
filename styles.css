@@ -14,7 +14,8 @@ the same as the underlying library; ugh), then their styles affect us.
 	--fc-page-bg-color: rgba(108, 138, 238, 0.6);
 	--fc-neutral-bg-color: rgba(208, 208, 208, 0.3);
 	--fc-neutral-text-color: #808080;
-	--fc-border-color: rgba(15, 120, 140, 0.1);;
+	--fc-border-color: rgba(15, 120, 140, 0.1);
+	;
 
 	--fc-button-text-color: #fff;
 	--fc-button-bg-color: #2C3E50;
@@ -46,4 +47,10 @@ the same as the underlying library; ugh), then their styles affect us.
 	/* .fc-v-event {
 		border: 3px solid var(--fc-event-border-color);
 	} */
+}
+
+.horizoncal input:invalid,
+.horizoncal .invalid {
+	border-color: var(--text-error);
+	color: var(--text-error);
 }
