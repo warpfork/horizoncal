@@ -27,11 +27,20 @@ export class HorizonCalSettingsTab extends PluginSettingTab {
 
 		containerEl.empty();
 
+		containerEl.createEl("h1", { text: "HorizonCal Settings" });
+
+		let foo: DocumentFragment;
+
 		new Setting(containerEl)
-			.setName('Prefix Path')
-			.setDesc('Directory in your vault HorizonCal should store all data.')
+			.setName("Prefix Path")
+			.setDesc(createFragment(el => {
+				el.appendText("Directory in your vault wherein HorizonCal should store all data.");
+				el.createEl("br");
+				el.createEl("br");
+				el.appendText("(Don't include a trailing slash.)");
+			}))
 			.addText(text => text
-				.setPlaceholder('horizoncal')
+				.setPlaceholder("horizoncal")
 				.setValue(this.plugin.settings.prefixPath)
 				.onChange(async (value) => {
 					this.plugin.settings.prefixPath = value;
