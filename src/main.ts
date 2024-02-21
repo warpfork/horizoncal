@@ -3,8 +3,8 @@ import {
 	WorkspaceLeaf
 } from 'obsidian';
 
-import { DEFAULT_SETTINGS, HorizonCalSettings, HorizonCalSettingsTab } from './settings';
-import { HorizonCalView, VIEW_TYPE } from './view';
+import { DEFAULT_SETTINGS, HorizonCalSettings, HorizonCalSettingsTab } from './settings/settings';
+import { HorizonCalView, VIEW_TYPE } from './ui/calendarview';
 
 export default class HorizonCalPlugin extends Plugin {
 	settings: HorizonCalSettings;
