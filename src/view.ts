@@ -1,11 +1,12 @@
 import {
+	CachedMetadata,
 	ItemView,
 	Menu,
 	Modal,
 	Setting,
 	TAbstractFile,
 	TFile,
-	WorkspaceLeaf
+	WorkspaceLeaf,
 } from 'obsidian';
 
 import {
@@ -170,31 +171,63 @@ export class HorizonCalView extends ItemView {
 		this.viewContentEl.createEl("h4", { text: "Horizon Calendar" });
 		this.calUIEl = this.viewContentEl.createEl("div", { cls: "horizoncal" });
 		this._doCal();
-		this.registerEvent(this.app.vault.on("rename", (file: TAbstractFile, oldPath: string) => {
-			console.log("rename event!")
-			// this._doCal();
-		}));
-		this.registerEvent(this.app.vault.on("create", (file: TAbstractFile) => {
-			console.log("create event!")
-			// this._doCal();
-		}));
-		this.registerEvent(this.app.vault.on("delete", (file: TAbstractFile) => {
-			console.log("delete event!")
-			// this._doCal();
-		}));
-		this.registerEvent(this.app.vault.on("modify", (file: TAbstractFile) => {
-			console.log("modify event!")
-			// this._doCal();
-		}));
-		// Turns out that if we're using dataview to load things, hooking anything _other than_ dataview is worse than useless,
-		// because in any other hook we're probably going to get stale data from querying dataview.  I understand why but wow what a delight.
-		// I think we're approaching a Decision Point for whether dataview is a _hard_ dependency of HorizonCal, or we do some other work ourselves.
-		this.registerEvent(this.app.metadataCache.on("dataview:metadata-change",
-			(type, file, oldPath?) => {
-				console.log("dataview change!")
-				this._doCal();
-			}
-		))
+
+		// So about events.
+		// There are many different places you can hook.  Some more useful (and efficient) than others.
+		// For all of these, _we only do it for the lifetime of the view_.
+		// If you don't have the calendar view open, there's no need for us to be updating anything.
+		// (TODO: there may be one exception to this; we might want the "keep filename in sync" rule to be in effect at all times.
+		//
+		// We use:
+		//  - `metadataCache.on("changed", ...)` -- it covers most of the bases, and gloriously, provides the already parsed frontmatter.
+		//  - `vault.on("rename", ...)` -- specifically because the metadata cache change event doesn't cover renames.
+		//  - `metadataCache.on("deleted", ...)` -- also not covered by the metadata cache change event.
+		//
+		// We _don't_ use:
+		//  - `vault.on("create", ...)` -- it's covered by `metadataCache.on("changed", ...)`
+		//  - `vault.on("modify", ...)` -- it's covered by `metadataCache.on("changed", ...)`
+		//  - `vault.on("delete", ...)` -- it's covered by `metadataCache.on("deleted", ...)`, which is similar but mildly more informative (maybe).
+		//  - `metadataCache.on("dataview:metadata-change", ...)` -- it sure works, but we're trying to avoid direct dependency on Dataview.
+		//
+		// Note for changes and renames alike, the handlers can be considerably redundant if the change came *from* the UI.
+		// But that's rather hard for us to tell, and idempotency means it makes little difference, so!
+		this.registerEvent(this.app.vault.on("rename",
+			(file: TAbstractFile, oldPath: string) => {
+				console.log("rename event!")
+				let fcEvt = this.calUI.getEventById(oldPath);
+				if (fcEvt != null) {
+					fcEvt.setProp("id", file.path)
+				}
+			}));
+		this.registerEvent(this.app.metadataCache.on("changed",
+			(file: TFile, data: string, cache: CachedMetadata) => {
+				console.log("metadata change!", cache, data);
+				// We can use whether an event matching that filename was alreayd in the calendar
+				//  as crude proxy for both {whether it's an event} and {whether it's in range of the view, thus we care}.
+				// TODO this is incomplete, though -- if something moves into the view range, then, well.
+				// TOOD also new file creation that's in range is a helluva example of that lol
+				let fcEvt = this.calUI.getEventById(file.path);
+				if (fcEvt == null) {
+					return
+				}
+				let hcEvt = HCEvent.fromFrontmatter(cache.frontmatter);
+				fcEvt.setProp("title", hcEvt.title.valueRaw)
+				fcEvt.setStart(hcEvt.getCompleteStartDt().toISO() as string)
+				fcEvt.setEnd(hcEvt.getCompleteEndDt().toISO() as string)
+
+				// TODO you may also want to hook a rename consideration on this.
+				// If the action is a user edit to the frontmatter... yeah, it's possible the file path should get resynced to it.
+			}));
+		this.registerEvent(this.app.metadataCache.on("deleted",
+			(file: TFile, prevCache: CachedMetadata | null) => {
+				console.log("delete event!")
+				// How very fortunate that file paths alone are event IDs.
+				// The 'prevCache' value is best-effort, so if we needed it, we'd be in trouble.
+				let fcEvt = this.calUI.getEventById(file.path);
+				if (fcEvt != null) {
+					fcEvt.remove()
+				}
+			}));
 	}
 
 	async onPaneMenu(menu: Menu) {
@@ -562,7 +595,8 @@ export class NewEventModal extends Modal {
 			//  it persists our mutations to the `fileFm` argument.
 		});
 
-		// TODO: bonk some UI refreshes!
+		// There is a remarkable lack of UI bonking here.
+		// We simply wait for the filesystem change events to cause the new data to come back to the UI.
 	}
 
 	onClose() {
