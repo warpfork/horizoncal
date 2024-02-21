@@ -7,11 +7,11 @@ import {
 import HorizonCalPlugin from '../main';
 
 export interface HorizonCalSettings {
-	mySetting: string;
+	prefixPath: string;
 }
 
 export const DEFAULT_SETTINGS: HorizonCalSettings = {
-	mySetting: 'default'
+	prefixPath: 'horizoncal'
 }
 
 export class HorizonCalSettingsTab extends PluginSettingTab {
@@ -28,13 +28,13 @@ export class HorizonCalSettingsTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+			.setName('Prefix Path')
+			.setDesc('Directory in your vault HorizonCal should store all data.')
 			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
+				.setPlaceholder('horizoncal')
+				.setValue(this.plugin.settings.prefixPath)
 				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.prefixPath = value;
 					await this.plugin.saveSettings();
 				}));
 	}

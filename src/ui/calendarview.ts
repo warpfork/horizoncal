@@ -56,9 +56,12 @@ export class HorizonCalView extends ItemView {
 	eventSources: EventSourceInput[] = [
 		{
 			events: (info, successCallback, failureCallback) => {
-				let hcEvts = loadRange("sys/horizoncal", toLuxonDateTime(info.start, this.calUI), toLuxonDateTime(info.end, this.calUI));
+				let hcEvts = loadRange(
+					this.plugin,
+					toLuxonDateTime(info.start, this.calUI),
+					toLuxonDateTime(info.end, this.calUI)
+				);
 				let fcEvts = hcEvts.map((hcEvt): EventInput => {
-					// console.log(hcEvt, hcEvt.getCompleteStartDt().toISO());
 					return {
 						id: hcEvt.loadedFrom,
 						title: hcEvt.title.valueRaw,
