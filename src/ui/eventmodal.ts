@@ -5,19 +5,16 @@ import {
 
 import { HCEvent, HCEventFilePath } from "../data/data";
 import { Control } from "../data/datacontrol";
-import { HorizonCalView } from "./calendarview";
+import HorizonCalPlugin from "../main";
 
 // TODO: with very little additional work, this doesn't have to be just for "new" events :)
-// TODO: not sure if the parent of this is actually the calendar view; we could launch this from an event file, too, as an alternative to the plain properties editor.
 
 export class NewEventModal extends Modal {
-	constructor(parentView: HorizonCalView, data: HCEvent) {
-		super(parentView.plugin.app);
+	constructor(plugin: HorizonCalPlugin, data: HCEvent) {
+		super(plugin.app);
 		this.data = data;
-		this.parentView = parentView;
 	}
 
-	parentView: HorizonCalView;
 	data: HCEvent;
 
 	onOpen() {

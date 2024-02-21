@@ -339,7 +339,7 @@ export class HorizonCalView extends ItemView {
 
 				// Invent some initial "frontmatter" and pop open a modal.
 				// The modal will handle further editing, and can persist a new file.
-				new NewEventModal(this, HCEvent.fromFrontmatter({
+				new NewEventModal(this.plugin, HCEvent.fromFrontmatter({
 					title: "untitled",
 					evtType: "default",
 					evtDate: startDt.toFormat("yyyy-MM-dd"),
