@@ -86,8 +86,8 @@ export class HorizonCalView extends ItemView {
 		// The second is the content div you're expected to use for most content.
 		this.viewContentEl = this.containerEl.children[1];
 		this.viewContentEl.empty();
-		this.viewContentEl.createEl("h4", { text: "Horizon Calendar" });
-		this.calUIEl = this.viewContentEl.createEl("div", { cls: "horizoncal" });
+		this.viewContentEl.addClass("horizoncal");
+		this.calUIEl = this.viewContentEl.createEl("div");
 		this._doCal();
 
 		// So about events.
@@ -281,7 +281,7 @@ export class HorizonCalView extends ItemView {
 				right: 'prev,next today',
 				// future work: additional nav buttons of our own that manage via 'gotoDate' and 'visibleRange'.
 				center: 'dayGridMonth,timeGridWeek,timeGridFourDay,timeGrid14Day,listWeek',
-				left: 'title',
+				left: '',
 			},
 			views: {
 				timeGridFourDay: {
