@@ -73,7 +73,15 @@ export class EventInteractModal extends Modal {
 			let toggle = new ToggleComponent(el);
 			toggle.toggleEl.addClass("delete-safety");
 			let button = new ButtonComponent(el).setButtonText("delete event").setDisabled(true).setWarning()
-				.onClick((evt) => { alert("just kidding!  not supported yet") })
+				.onClick((evt) => {
+					let file = this.app.vault.getAbstractFileByPath(this.data.loadedFrom!)
+					if (!file || !(file instanceof TFile)) {
+						this.close();
+						return
+					}
+					this.app.vault.delete(file);
+					this.close();
+				 })
 			toggle.onChange((val:boolean) => {
 				button.setDisabled(!val);
 			})
