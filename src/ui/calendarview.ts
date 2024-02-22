@@ -301,7 +301,7 @@ export class HorizonCalView extends ItemView {
 			// scrollTime: // probably ought to be set so "now" is in it, yo...
 			// the 'scrollToTime' method might also be the right thing.
 			scrollTimeReset: false,
-			height: "auto",
+			height: "100%",
 			businessHours: {
 				daysOfWeek: [1, 2, 3, 4, 5],
 				startTime: '09:00',
