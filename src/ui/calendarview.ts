@@ -288,11 +288,13 @@ export class HorizonCalView extends ItemView {
 					type: 'timeGrid',
 					duration: { days: 4 },
 					dateIncrement: { days: 1 },
+					slotEventOverlap: false,
 				},
 				timeGrid14Day: {
 					type: 'timeGrid',
 					duration: { days: 14 },
 					dateIncrement: { days: 1 },
+					slotEventOverlap: false,
 				},
 			},
 			nowIndicator: true,
