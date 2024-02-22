@@ -38,10 +38,10 @@ export class EventInteractModal extends Modal {
 		titleEl.createEl("h4", { text: this.data.title.valueRaw });
 		// TODO display: slightly more basic facts
 
-		contentEl.createDiv({cls: "control-wide"}, (el) => {
+		contentEl.createDiv({ cls: "control-wide" }, (el) => {
 			new ButtonComponent(el).setButtonText("edit event")
 		})
-		contentEl.createDiv({cls: "control-wide"}, (el) => {
+		contentEl.createDiv({ cls: "control-wide" }, (el) => {
 			new ButtonComponent(el).setButtonText("open in markdown editor")
 				.onClick((evt) => {
 					let foundExisting = false
@@ -67,7 +67,7 @@ export class EventInteractModal extends Modal {
 					this.close();
 				})
 		})
-		contentEl.createDiv({cls: "control-wide"}, (el) => {
+		contentEl.createDiv({ cls: "control-wide" }, (el) => {
 			// A saftey togg toggle next to the delete button makes it so two clicks are required
 			// (without introducing yet another modal).  Debatable if this is the prettier way or not, but it does the trick.
 			let toggle = new ToggleComponent(el);
@@ -81,12 +81,12 @@ export class EventInteractModal extends Modal {
 					}
 					this.app.vault.delete(file);
 					this.close();
-				 })
-			toggle.onChange((val:boolean) => {
+				})
+			toggle.onChange((val: boolean) => {
 				button.setDisabled(!val);
 			})
 		})
-		contentEl.createDiv({cls: "control-wide"}, (el) => {
+		contentEl.createDiv({ cls: "control-wide" }, (el) => {
 			new ButtonComponent(el).setIcon("back").setButtonText("cancel")
 				.onClick((evt) => { this.close(); })
 		})
