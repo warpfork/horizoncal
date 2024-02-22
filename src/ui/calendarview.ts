@@ -157,6 +157,17 @@ export class HorizonCalView extends ItemView {
 					this._doCal();
 				});
 		});
+		menu.addSeparator();
+		// Startlingly, having a way to close a view is *not the default* on mobile.
+		// So we'll make sure there's at least an option in the menu (like there is for editor views).
+		menu.addItem((item) => {
+			item
+				.setTitle("Close")
+				.setIcon("x")
+				.onClick(async () => {
+					this.leaf.detach();
+				});
+		});
 	}
 
 	async onResize() {
