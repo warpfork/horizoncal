@@ -8,6 +8,7 @@ import {
 
 import { HCEvent } from "../data/data";
 import HorizonCalPlugin from "../main";
+import { EventEditModal } from './EventEditModal';
 
 // This is the first modal that pops up when you click or tap an _existing_ event.
 //
@@ -40,6 +41,17 @@ export class EventInteractModal extends Modal {
 
 		contentEl.createDiv({ cls: "control-wide" }, (el) => {
 			new ButtonComponent(el).setButtonText("edit event")
+				.onClick((evt) => {
+					let hcEvtOrError = HCEvent.fromPath(this.app, this.data.loadedFrom!);
+					if (hcEvtOrError instanceof Error) {
+						alert("event file disappeared!");
+						this.close();
+						return
+					}
+					let hcEvt: HCEvent = hcEvtOrError;
+					new EventEditModal(this.plugin, hcEvt).open();
+					this.close();
+				})
 		})
 		contentEl.createDiv({ cls: "control-wide" }, (el) => {
 			new ButtonComponent(el).setButtonText("open in markdown editor")

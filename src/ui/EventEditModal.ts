@@ -1,14 +1,19 @@
 import {
 	Modal,
 	Setting,
+	TFile,
 } from 'obsidian';
 
 import { HCEvent, HCEventFilePath } from "../data/data";
 import { Control } from "../data/datacontrol";
 import HorizonCalPlugin from "../main";
 
-// TODO: with very little additional work, this doesn't have to be just for "new" events :)
-
+//
+// If the given HCEvent has its `loadedFrom` property set,
+// we assume we're editing an existing event, and some text changes to match.
+// If `loadedFrom` is not set, we will create a new file before saving.
+// If `loadedFrom` is not set, but the computed destination filename exists
+// TODO sure you can kick that can down the road again, but really?
 export class EventEditModal extends Modal {
 	constructor(plugin: HorizonCalPlugin, data: HCEvent) {
 		super(plugin.app);
@@ -25,7 +30,11 @@ export class EventEditModal extends Modal {
 
 		let { contentEl, containerEl } = this;
 		containerEl.addClass("horizoncal");
-		contentEl.createEl("h1", { text: "Edit event" });
+		if (this.data.loadedFrom) {
+			contentEl.createEl("h1", { text: "Edit event" });
+		} else {
+			contentEl.createEl("h1", { text: "New event" });
+		}
 
 		let widgeteer = <TParsed>(params: {
 			// Consider it constrained that "TParsed as DateTime, when type=='date'".
@@ -135,7 +144,6 @@ export class EventEditModal extends Modal {
 				btn.setTooltip("Save");
 				btn.onClick(async () => {
 					await this._onSubmit();
-					this.close();
 				});
 				return btn;
 			})
@@ -175,11 +183,29 @@ export class EventEditModal extends Modal {
 		this.containerEl.setCssStyles({ backgroundColor: "#000022cc" })
 	}
 	async _onSubmit() {
-		// FIXME are you sure it's valid? :D
+		// Check validation again.
+		// The UI should've already highlighted invalid fields,
+		// but if you still clicked go, you need a kick in the shins.
+		// This seems like a rare case of "alert is actually the right UX".
+		let error = this.data.validate();
+		if (error) {
+			alert(error)
+			return
+		}
 
-		let path = HCEventFilePath.fromEvent(this.data);
-
-		let file = await this.app.vault.create(`${this.plugin.settings.prefixPath}/${path.wholePath}`, "")
+		let file: TFile;
+		if (this.data.loadedFrom) {
+			let probFile = this.app.vault.getAbstractFileByPath(this.data.loadedFrom!)
+			if (!probFile || !(probFile instanceof TFile)) {
+				alert("this was intended to be an edit dialog, but the original file disappeared!")
+				return
+			}
+			file = probFile
+		} else {
+			// FIXME: file-already-exists comes up here as a thrown exception.  It should at least be reported better.
+			let path = HCEventFilePath.fromEvent(this.data);
+			file = await this.app.vault.create(`${this.plugin.settings.prefixPath}/${path.wholePath}`, "")
+		}
 
 		await this.app.fileManager.processFrontMatter(file, (fileFm: any): void => {
 			this.data.foistFrontmatter(fileFm);
@@ -187,6 +213,9 @@ export class EventEditModal extends Modal {
 			// It's handled magically by processFrontMatter as soon as this callback returns:
 			//  it persists our mutations to the `fileFm` argument.
 		});
+
+		// And we're done.  This modal can go away.
+		this.close();
 
 		// There is a remarkable lack of UI bonking here.
 		// We simply wait for the filesystem change events to cause the new data to come back to the UI.
