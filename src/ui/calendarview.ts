@@ -119,19 +119,35 @@ export class HorizonCalView extends ItemView {
 			}));
 		this.registerEvent(this.app.metadataCache.on("changed",
 			(file: TFile, data: string, cache: CachedMetadata) => {
-				console.log("metadata change!", cache, data);
-				// We can use whether an event matching that filename was alreayd in the calendar
-				//  as crude proxy for both {whether it's an event} and {whether it's in range of the view, thus we care}.
-				// TODO this is incomplete, though -- if something moves into the view range, then, well.
-				// TOOD also new file creation that's in range is a helluva example of that lol
-				let fcEvt = this.calUI.getEventById(file.path);
-				if (fcEvt == null) {
+				console.log("metadata change!", file, cache);
+
+				// If frontmatter isn't present, it more or less means "new file".
+				// We also get another event when the frontmatter has been loaded into the cache,
+				// so... we can just return early and ignore events without that data present.
+				if (!cache.frontmatter) {
 					return
 				}
+
+				// For events already in the calendar: we update them.
+				// If not: we add it one.
+				// (TODO: should filter for the relevance of date.)
 				let hcEvt = HCEvent.fromFrontmatter(cache.frontmatter);
-				fcEvt.setProp("title", hcEvt.title.valueRaw)
-				fcEvt.setStart(hcEvt.getCompleteStartDt().toISO() as string)
-				fcEvt.setEnd(hcEvt.getCompleteEndDt().toISO() as string)
+				let fcEvt = this.calUI.getEventById(file.path);
+				if (fcEvt == null) {
+					// New event!
+					this.calUI.addEvent({
+						id: file.path,
+						title: hcEvt.title.valueRaw,
+						start: hcEvt.getCompleteStartDt().toISO() as string,
+						end: hcEvt.getCompleteEndDt().toISO() as string,
+					})
+					// FIXME it gets a different default background because not event source; silly.
+					//  It seems we can give an EventSourceImpl handle as another param; worth?  Hm.  Probably.
+				} else {
+					fcEvt.setProp("title", hcEvt.title.valueRaw)
+					fcEvt.setStart(hcEvt.getCompleteStartDt().toISO() as string)
+					fcEvt.setEnd(hcEvt.getCompleteEndDt().toISO() as string)
+				}
 
 				// TODO you may also want to hook a rename consideration on this.
 				// If the action is a user edit to the frontmatter... yeah, it's possible the file path should get resynced to it.
