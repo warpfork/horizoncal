@@ -301,7 +301,7 @@ export class HorizonCalView extends ItemView {
 			// 	alert("TODO: make new event for " + dt.toFormat("yyyy-MM-dd HH:mm"))
 			// },
 			selectable: true, // Enables the select callback and related UI.
-			// There are some fun params to this like `selectMinDistance` and `selectMirror`, but so far I don't see the appeal of engaging them.
+			selectMinDistance: 5, // Default is 0px, very silly!
 			select: (info) => {
 				let startDt = toLuxonDateTime(info.start, this.calUI)
 				let endDt = toLuxonDateTime(info.end, this.calUI)
