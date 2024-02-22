@@ -23,7 +23,7 @@ import luxonPlugin, { toLuxonDateTime } from '@fullcalendar/luxon3';
 import { HCEvent, HCEventFilePath } from '../data/data';
 import { loadRange } from '../data/loading';
 import HorizonCalPlugin from '../main';
-import { NewEventModal } from './EventEditModal';
+import { EventEditModal } from './EventEditModal';
 import { EventInteractModal } from './EventInteractModal';
 
 export const VIEW_TYPE = "horizoncal-view";
@@ -346,7 +346,7 @@ export class HorizonCalView extends ItemView {
 
 				// Invent some initial "frontmatter" and pop open a modal.
 				// The modal will handle further editing, and can persist a new file.
-				new NewEventModal(this.plugin, HCEvent.fromFrontmatter({
+				new EventEditModal(this.plugin, HCEvent.fromFrontmatter({
 					title: "untitled",
 					evtType: "default",
 					evtDate: startDt.toFormat("yyyy-MM-dd"),

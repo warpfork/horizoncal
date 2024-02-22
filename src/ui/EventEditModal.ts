@@ -9,7 +9,7 @@ import HorizonCalPlugin from "../main";
 
 // TODO: with very little additional work, this doesn't have to be just for "new" events :)
 
-export class NewEventModal extends Modal {
+export class EventEditModal extends Modal {
 	constructor(plugin: HorizonCalPlugin, data: HCEvent) {
 		super(plugin.app);
 		this.plugin = plugin;
@@ -25,7 +25,7 @@ export class NewEventModal extends Modal {
 
 		let { contentEl, containerEl } = this;
 		containerEl.addClass("horizoncal");
-		contentEl.createEl("h1", { text: "New event" });
+		contentEl.createEl("h1", { text: "Edit event" });
 
 		let widgeteer = <TParsed>(params: {
 			// Consider it constrained that "TParsed as DateTime, when type=='date'".
