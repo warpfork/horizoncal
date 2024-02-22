@@ -23,8 +23,8 @@ import luxonPlugin, { toLuxonDateTime } from '@fullcalendar/luxon3';
 import { HCEvent, HCEventFilePath } from '../data/data';
 import { loadRange } from '../data/loading';
 import HorizonCalPlugin from '../main';
+import { NewEventModal } from './EventEditModal';
 import { EventInteractModal } from './EventInteractModal';
-import { NewEventModal } from './eventmodal';
 
 export const VIEW_TYPE = "horizoncal-view";
 
