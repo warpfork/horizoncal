@@ -85,7 +85,27 @@ the same as the underlying library; ugh), then their styles affect us.
 	margin: 0.2em 0.5em;
 }
 
-.hc-evt-interact-modal button {
-	width: calc(100% - 6em);
+.hc-evt-interact-modal .control-wide {
 	margin: 0.3em 3em;
+	display: flex;
+	justify-content: space-between 1em;
+	align-items: center;
+}
+
+.hc-evt-interact-modal .control-wide button {
+	flex-grow: 1;
+}
+
+.hc-evt-interact-modal .checkbox-container.delete-safety {
+	margin: 0 1em;
+}
+
+.horizoncal .delete-safety.checkbox-container.is-enabled {
+	background-color: var(--background-modifier-error);
+}
+
+/* Things that are disabled probably should look it, instead of still having full-claxon warning decoration, hm? */
+.horizoncal button.mod-warning:disabled {
+	background-color: color-mix(in srgb, var(--background-modifier-error) 30%, #333);
+	color: color-mix(in srgb, var(--text-on-accent) 30%, #333);
 }
