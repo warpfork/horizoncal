@@ -49,6 +49,18 @@ the same as the underlying library; ugh), then their styles affect us.
 	} */
 }
 
+/* add a little spacing such that even if you have a background event across all time,
+    there's still a little space it doesn't cover. */
+.horizoncal .fc-timegrid-col-frame {
+	margin: 0 3px;
+}
+
+/* add a little more spacing yet before we allow events to be drawn.
+    it's important that events in different days not nudge each other. */
+.horizoncal .fc-timegrid-col-events {
+	margin: 0 5px;
+}
+
 
 
 /*=====================================*/
