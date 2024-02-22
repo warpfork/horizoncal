@@ -86,7 +86,7 @@ export class EventEditModal extends Modal {
 		};
 
 		widgeteer({
-			prop: this.data.title, // TODO okay wasn't really planning to Control'ify EVERYTHING but... it makes mutation widget wiring easier too.
+			prop: this.data.title,
 			name: "Title",
 			type: "text",
 		});
@@ -96,7 +96,7 @@ export class EventEditModal extends Modal {
 			// want to introduce a more complex feature here,
 			// probably with a sub-modal.
 			// May also turn into a set that's persisted as comma-sep strings.
-			prop: this.data.evtType, // TODO okay wasn't really planning to Control'ify EVERYTHING but... it makes mutation widget wiring easier too.
+			prop: this.data.evtType,
 			name: "Event Type",
 			type: "text",
 		});
