@@ -310,7 +310,9 @@ export class HorizonCalView extends ItemView {
 				}
 				let metadata = this.plugin.app.metadataCache.getFileCache(file);
 				let evtFmRaw = metadata!.frontmatter!
-				new EventInteractModal(this.plugin, HCEvent.fromFrontmatter(evtFmRaw)).open();
+				let hcEvt = HCEvent.fromFrontmatter(evtFmRaw);
+				hcEvt.loadedFrom = file.path;
+				new EventInteractModal(this.plugin, hcEvt).open();
 			},
 
 			// Dragging?  Spicy.

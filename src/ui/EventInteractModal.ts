@@ -1,7 +1,8 @@
 
 import {
 	ButtonComponent,
-	Modal
+	Modal,
+	TFile,
 } from 'obsidian';
 
 import { HCEvent } from "../data/data";
@@ -41,6 +42,16 @@ export class EventInteractModal extends Modal {
 		})
 		contentEl.createDiv({}, (el) => {
 			new ButtonComponent(el).setButtonText("open in markdown editor")
+				.onClick((evt) => {
+					let file = this.plugin.app.vault.getAbstractFileByPath(this.data.loadedFrom!)
+					if (!file || !(file instanceof TFile)) {
+						alert("event file disappeared!");
+						this.close();
+						return
+					}
+					this.plugin.app.workspace.getLeaf('tab').openFile(file, {active: true});
+					this.close();
+				})
 		})
 		contentEl.createDiv({}, (el) => {
 			// TODO put a toggle next to this so it requires two clicks (but doesn't produce yet another modal).

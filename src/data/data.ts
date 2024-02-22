@@ -56,7 +56,9 @@ export class HCEvent {
 	endTime: ControlOptional<string, Duration>;
 	endTZ: ControlOptional<string, string>;
 
-	loadedFrom?: string; // Optionally, a record of the path this was loaded from.  (Doesn't mean it's where this *should* be stored!)
+	// Optionally, a record of the path this was loaded from.  (Doesn't mean it's where this *should* be stored!)
+	// (It's tempting to store a whole TFile here for convenience, but I think it's better to take a trip through the vault API each time to reduce the range of time you might be holding invalid beliefs about the filesystem state.)
+	loadedFrom?: string;
 
 	allControls(): Control<any, any>[] {
 		return [
