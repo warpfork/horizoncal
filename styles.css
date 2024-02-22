@@ -1,12 +1,13 @@
-/*
+/*=====================================*/
+/* Styling for fullcalendar: */
 
+/*
 The variables below are those documented and suggested by fullcalendar.
 
 Note that we scoped these by our plugin name.
 Some other plugins for obsidian have not been such good citizens,
 so beware if you install that plugin (which is also, very confusingly, named "full calendar",
 the same as the underlying library; ugh), then their styles affect us.
-
 */
 
 :root .horizoncal {
@@ -48,11 +49,31 @@ the same as the underlying library; ugh), then their styles affect us.
 	} */
 }
 
+
+
+/*=====================================*/
+/* Styling for forms: */
+
 .horizoncal input:invalid,
 .horizoncal .invalid {
 	border-color: var(--text-error);
 	color: var(--text-error);
 }
+
+.horizoncal .delete-safety.checkbox-container.is-enabled {
+	background-color: var(--background-modifier-error);
+}
+
+/* Things that are disabled probably should look it, instead of still having full-claxon warning decoration, hm? */
+.horizoncal button.mod-warning:disabled {
+	background-color: color-mix(in srgb, var(--background-modifier-error) 30%, #333);
+	color: color-mix(in srgb, var(--text-on-accent) 30%, #333);
+}
+
+
+
+/*=====================================*/
+/* Styling for modals: */
 
 .hc-evt-interact-modal .modal {
 	/* on desktop, this can be narrower than most modals. */
@@ -71,6 +92,11 @@ the same as the underlying library; ugh), then their styles affect us.
 	/* restore the normal borders. */
 	border: var(--modal-border-width) solid var(--modal-border-color);
 }
+
+
+
+/*=====================================*/
+/* Styling for some specific modals and elements: */
 
 .hc-evt-interact-modal .modal-title span {
 	margin: 0.5em auto 0.2em auto;
@@ -98,14 +124,4 @@ the same as the underlying library; ugh), then their styles affect us.
 
 .hc-evt-interact-modal .checkbox-container.delete-safety {
 	margin: 0 1em;
-}
-
-.horizoncal .delete-safety.checkbox-container.is-enabled {
-	background-color: var(--background-modifier-error);
-}
-
-/* Things that are disabled probably should look it, instead of still having full-claxon warning decoration, hm? */
-.horizoncal button.mod-warning:disabled {
-	background-color: color-mix(in srgb, var(--background-modifier-error) 30%, #333);
-	color: color-mix(in srgb, var(--text-on-accent) 30%, #333);
 }
