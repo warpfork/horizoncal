@@ -59,24 +59,26 @@ export function loadRange(plugin: HorizonCalPlugin, start: DateTime, end: DateTi
 	// and if it's at all parsable, accumulate the parsed HCEvent.
 	let results: HCEvent[] = []
 	files.forEach((file: TFile) => {
-		let metadata = plugin.app.metadataCache.getFileCache(file);
-		let evtFmRaw = metadata!.frontmatter!
-
-		// Quick check first.
-		if (!evtFmRaw["evtDate"]) {
-			// TODO use filemanager.processFrontMatter to write an "hcerror" field with message.
-			return
-		}
-
 		// Use HCEvent to do a parse.
 		// An HCEvent is something you can produce unconditionally:
 		// it just might contain data that's flagged as not valid.
-		let hcEvt = HCEvent.fromFrontmatter(evtFmRaw);
-		hcEvt.loadedFrom = file.path;
-		let hcEvtErr = hcEvt.validate();
-		if (hcEvtErr) {
+		// And because we already filtered with filename patterns,
+		// we really do expect the frontmatter in these files to be fairly valid.
+		let hcEvtOrErr = HCEvent.fromFile(plugin.app, file);
+		if (hcEvtOrErr instanceof Error) {
+			// This probaby shouldn't be too common.
+			// And if it does happen... well, okay.  Nothing we can do but ignore it.
+			console.log("file disappeared mid walk?", hcEvtOrErr);
+			return
+		}
+		let hcEvt: HCEvent = hcEvtOrErr;
+
+		// Check the validity of the value.
+		// If it's not valid, don't accumulate it in the results.
+		let hcEvtValidityErr = hcEvt.validate();
+		if (hcEvtValidityErr) {
 			// TODO use filemanager.processFrontMatter to write an "hcerror" field with message.
-			console.log("conversion error:", hcEvtErr);
+			console.log("conversion error:", hcEvtValidityErr);
 			return
 		}
 

@@ -321,15 +321,12 @@ export class HorizonCalView extends ItemView {
 			eventClick: (info) => {
 				// This hook works by... fully reloading the file assumed to back the event.
 				// This works fine for HC-native events, but will be much less fine if we add other event sources.
-				let file = this.plugin.app.vault.getAbstractFileByPath(info.event.id)
-				if (!file || !(file instanceof TFile)) {
+				let evtOrError = HCEvent.fromPath(this.app, info.event.id);
+				if (evtOrError instanceof Error) {
 					alert("cannot use HC's event editors; event id did not map to a file path!");
 					return
 				}
-				let metadata = this.plugin.app.metadataCache.getFileCache(file);
-				let evtFmRaw = metadata!.frontmatter!
-				let hcEvt = HCEvent.fromFrontmatter(evtFmRaw);
-				hcEvt.loadedFrom = file.path;
+				let hcEvt = evtOrError;
 				new EventInteractModal(this.plugin, hcEvt).open();
 			},
 

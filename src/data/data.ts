@@ -1,4 +1,6 @@
 
+import { App, TAbstractFile, TFile } from "obsidian";
+
 import { Control, ControlOptional, ValidateResult, validateString } from "./datacontrol";
 
 import { DateTime, Duration, IANAZone } from 'luxon';
@@ -9,6 +11,9 @@ import { DateTime, Duration, IANAZone } from 'luxon';
 // Using HCEvent generally works by dropping frontmatter into it, as strings.
 // Then, you can ask for a validation check.
 export class HCEvent {
+	// Parse an HCEvent from a "frontmatter" object (or any `any`, really).
+	// Never returns an error, because all data fields store validation errors;
+	// get any accumulated issues by calling `validate` on the returned object.
 	static fromFrontmatter(fm: any): HCEvent {
 		let v = new HCEvent();
 		v.title = new Control("title", validateString).update(fm.title);
@@ -20,6 +25,34 @@ export class HCEvent {
 		v.endTime = new ControlOptional("endTime", validateTime).update(fm.endTime);
 		v.endTZ = new ControlOptional("endTZ", validateTZ).update(fm.endTZ);
 		return v;
+	}
+
+	// Load an HCEvent from a file in the vault.
+	// This requires the entire app handle (not just a vault handle) because it consults the metadatacache.
+	//
+	// An error is returned if the path is not a file.
+	// Otherwise, errors of parsing and validation are stored and returned (same as with `fromFrontmatter`).
+	//
+	// The path the data is loaded from will be retained in `loadedFrom` (and will be normalized).
+	static fromPath(app: App, path: string): HCEvent | Error {
+		return this._fromFile(app, app.vault.getAbstractFileByPath(path));
+	}
+
+	// Exactly as per `fromPath`, but saves a little work if you already have a `TFile` in hand.
+	static fromFile(app: App, file: TFile | TAbstractFile): HCEvent | Error {
+		return this._fromFile(app, file);
+	}
+
+	// Ghastly little helper for nullablity type appeasement.
+	private static _fromFile(app: App, file: TFile | TAbstractFile | null): HCEvent | Error {
+		if (!file || !(file instanceof TFile)) {
+			return new Error(`could not load HCEvent data from '${path}' -- not a file`);
+		}
+		let metadata = app.metadataCache.getFileCache(file);
+		let evtFmRaw = metadata!.frontmatter!;
+		let hcEvt = this.fromFrontmatter(evtFmRaw);
+		hcEvt.loadedFrom = file.path;
+		return hcEvt;
 	}
 
 	// There are still a few higher level validity rules not covered.
