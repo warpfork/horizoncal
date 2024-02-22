@@ -23,6 +23,7 @@ import luxonPlugin, { toLuxonDateTime } from '@fullcalendar/luxon3';
 import { HCEvent, HCEventFilePath } from '../data/data';
 import { loadRange } from '../data/loading';
 import HorizonCalPlugin from '../main';
+import { EventInteractModal } from './EventInteractModal';
 import { NewEventModal } from './eventmodal';
 
 export const VIEW_TYPE = "horizoncal-view";
@@ -288,18 +289,24 @@ export class HorizonCalView extends ItemView {
 				hour12: false
 			},
 
+			eventClick: (info) => {
+				// This hook works by... fully reloading the file assumed to back the event.
+				// This works fine for HC-native events, but will be much less fine if we add other event sources.
+				let file = this.plugin.app.vault.getAbstractFileByPath(info.event.id)
+				if (!file || !(file instanceof TFile)) {
+					alert("cannot use HC's event editors; event id did not map to a file path!");
+					return
+				}
+				let metadata = this.plugin.app.metadataCache.getFileCache(file);
+				let evtFmRaw = metadata!.frontmatter!
+				new EventInteractModal(this.plugin, HCEvent.fromFrontmatter(evtFmRaw)).open();
+			},
+
 			// Dragging?  Spicy.
 			editable: true, // Enables the drop and resize callbacks and related UI.
 			longPressDelay: 200, // Default is a full second, insanely too long.
 			eventDrop: changeHook,
 			eventResize: changeHook,
-			// dateClick: (info) => {
-			// 	// I don't think we have a way to detect "double click".  It's an event registration thing, not a field on the event.
-			// 	// On mobile: this does fire.  And it doesn't fire on drag.  So that's good.
-			// 	// 'select' might be more what I want, though.
-			// 	let dt = toLuxonDateTime(info.date, this.calUI)
-			// 	alert("TODO: make new event for " + dt.toFormat("yyyy-MM-dd HH:mm"))
-			// },
 			selectable: true, // Enables the select callback and related UI.
 			selectMinDistance: 5, // Default is 0px, very silly!
 			select: (info) => {
