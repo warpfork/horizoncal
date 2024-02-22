@@ -43,16 +43,26 @@ export class EventInteractModal extends Modal {
 		contentEl.createDiv({}, (el) => {
 			new ButtonComponent(el).setButtonText("open in markdown editor")
 				.onClick((evt) => {
-					let file = this.plugin.app.vault.getAbstractFileByPath(this.data.loadedFrom!)
-					if (!file || !(file instanceof TFile)) {
-						alert("event file disappeared!");
-						this.close();
-						return
+					let foundExisting = false
+					this.app.workspace.iterateAllLeaves((leaf) => {
+						const viewState = leaf.getViewState()
+						if (
+							viewState.type === 'markdown' &&
+							viewState.state?.file === this.data.loadedFrom
+						) {
+							this.app.workspace.setActiveLeaf(leaf, { focus: true })
+							foundExisting = true
+						}
+					})
+					if (!foundExisting) {
+						let file = this.app.vault.getAbstractFileByPath(this.data.loadedFrom!)
+						if (!file || !(file instanceof TFile)) {
+							alert("event file disappeared!");
+							this.close();
+							return
+						}
+						this.plugin.app.workspace.getLeaf('tab').openFile(file, { active: true });
 					}
-					this.plugin.app.workspace.getLeaf('tab').openFile(file, {
-						active: true,
-						// This is poorly documented, but it appears the 'eState' field here is short for "editor state" and you can set stuff like line and cursor.
-					});
 					this.close();
 				})
 		})
