@@ -15,7 +15,6 @@ the same as the underlying library; ugh), then their styles affect us.
 	--fc-neutral-bg-color: rgba(208, 208, 208, 0.3);
 	--fc-neutral-text-color: #808080;
 	--fc-border-color: rgba(15, 120, 140, 0.1);
-	;
 
 	--fc-button-text-color: #fff;
 	--fc-button-bg-color: #2C3E50;
@@ -54,9 +53,38 @@ the same as the underlying library; ugh), then their styles affect us.
 	border-color: var(--text-error);
 	color: var(--text-error);
 }
+
 .hc-evt-interact-modal .modal {
+	/* on desktop, this can be narrower than most modals. */
 	width: calc(0.7 * var(--dialog-width));
 }
+
+.is-phone .hc-evt-interact-modal .modal {
+	/* The defaults for modals on mobile are very screen-filly.  That's not appropriate for this one. */
+	/* Sidenote: at least in my current version of Obsidian on android, 'bottom' doesn't appear to work correctly here.  But it does in desktop Electron when told to emulate mobile.  Dunno. */
+	top: 15%;
+	bottom: 15%;
+	left: unset;
+	right: unset;
+	/* radius on all sides, don't skip the bottom. */
+	border-radius: var(--radius-m);
+	/* restore the normal borders. */
+	border: var(--modal-border-width) solid var(--modal-border-color);
+}
+
+.hc-evt-interact-modal .modal-title span {
+	margin: 0.5em auto 0.2em auto;
+	display: block;
+	color: var(--text-muted);
+	font-style: italic;
+	font-size: var(--file-header-font-size);
+	font-weight: var(--file-header-font-weight);
+}
+
+.hc-evt-interact-modal .modal-title h4 {
+	margin: 0.2em 0.5em;
+}
+
 .hc-evt-interact-modal button {
 	width: calc(100% - 6em);
 	margin: 0.3em 3em;
