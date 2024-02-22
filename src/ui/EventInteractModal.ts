@@ -49,7 +49,10 @@ export class EventInteractModal extends Modal {
 						this.close();
 						return
 					}
-					this.plugin.app.workspace.getLeaf('tab').openFile(file, {active: true});
+					this.plugin.app.workspace.getLeaf('tab').openFile(file, {
+						active: true,
+						// This is poorly documented, but it appears the 'eState' field here is short for "editor state" and you can set stuff like line and cursor.
+					});
 					this.close();
 				})
 		})
