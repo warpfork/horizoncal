@@ -83,7 +83,7 @@ export default class HorizonCalPlugin extends Plugin {
 
 		let leaf: WorkspaceLeaf | null = null;
 		if (forceNew) {
-			leaf = workspace.getLeaf();
+			leaf = workspace.getLeaf("tab");
 		} else if (workspace.rightSplit.type == "mobile-drawer") {
 			leaf = workspace.getRightLeaf(false);
 		} else {
@@ -93,7 +93,7 @@ export default class HorizonCalPlugin extends Plugin {
 				leaf = leaves[0];
 			} else {
 				// Get a new one.
-				leaf = workspace.getLeaf();
+				leaf = workspace.getLeaf("tab");
 			}
 		}
 		await leaf.setViewState({ type: VIEW_TYPE, active: true });
