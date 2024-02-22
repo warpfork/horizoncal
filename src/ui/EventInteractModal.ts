@@ -1,5 +1,6 @@
 
 import {
+	ButtonComponent,
 	Modal
 } from 'obsidian';
 
@@ -29,14 +30,25 @@ export class EventInteractModal extends Modal {
 
 	onOpen() {
 		let { contentEl, containerEl } = this;
-		containerEl.addClass("horizoncal");
+		containerEl.addClass("horizoncal", "hc-evt-interact-modal");
 
-		contentEl.createEl("h3", { text: "viewing event" });
-		
-		// TODO display: event title and basic facts
-		// TODO button: edit event with tool
-		// TODO button: go to editor
-		// TODO button: delete event
-		// TODO button: close / cancel
+		contentEl.createEl("h5", { text: "viewing event: " + this.data.title.valueRaw });
+		// TODO display: slightly more basic facts
+
+		contentEl.createDiv({}, (el) => {
+			new ButtonComponent(el).setButtonText("edit event")
+		})
+		contentEl.createDiv({}, (el) => {
+			new ButtonComponent(el).setButtonText("open in markdown editor")
+		})
+		contentEl.createDiv({}, (el) => {
+			// TODO put a toggle next to this so it requires two clicks (but doesn't produce yet another modal).
+			new ButtonComponent(el).setButtonText("delete event").setWarning()
+				.onClick((evt) => { alert("just kidding!  not supported yet") })
+		})
+		contentEl.createDiv({}, (el) => {
+			new ButtonComponent(el).setIcon("back").setButtonText("cancel")
+				.onClick((evt) => { this.close(); })
+		})
 	}
 }
