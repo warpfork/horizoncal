@@ -46,7 +46,7 @@ export class HCEvent {
 	// Ghastly little helper for nullablity type appeasement.
 	private static _fromFile(app: App, file: TFile | TAbstractFile | null): HCEvent | Error {
 		if (!file || !(file instanceof TFile)) {
-			return new Error(`could not load HCEvent data from '${path}' -- not a file`);
+			return new Error(`could not load HCEvent data from '${file}' -- not a file`);
 		}
 		let metadata = app.metadataCache.getFileCache(file);
 		let evtFmRaw = metadata!.frontmatter!;
