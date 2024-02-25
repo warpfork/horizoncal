@@ -2,6 +2,7 @@ import {
 	Modal,
 	Setting,
 	TFile,
+	ToggleComponent,
 } from 'obsidian';
 
 import { HCEvent, HCEventFilePath } from "../data/data";
@@ -256,17 +257,37 @@ export class CategorySelectModal extends Modal {
 
 	onOpen() {
 		this.containerEl.addClass("horizoncal");
+		this.containerEl.addClass("hc-category-selection-modal");  // Main purpose is CSS to shrink it a bit.
 
 		// The set of options we'll render is the union of categories known in the config and anything previously here.
 		let options: string[] = []
 		options.push(...this.parent.plugin.settings.categories);
 		options.push(...this.parent.data.evtCat.valueStructured);
 		options.sort(); // TODO may want to flag these as originating from non-settings or not.  Visually.
+		options = options.unique();
+
+		// Someday todo: i'd probably like to have the arrow keys, and pgup/pgdown, move the nav focus too.
 
 		this.contentEl.createEl("ul", {}, (el) => {
 			options.forEach((row) => {
 				el.createEl("li", {}, (el) => {
-					new Setting(el).addToggle((tog) => {}).setName(row)
+					new Setting(el)
+						.setName(row)
+						.addToggle((tog: ToggleComponent) => {
+							tog.setValue(this.parent.data.evtCat.valueStructured.contains(row));
+							tog.onChange((on: boolean) => {
+								let prev = this.parent.data.evtCat.valuePrimitive
+								let next = [...prev]
+								if (on) {
+									next.push("#evt/" + row)
+								} else {
+									next.remove("#evt/" + row)
+								}
+								this.parent.data.evtCat.update(next)
+								// TODO trigger relevant re-render on parent too.
+							});
+						})
+
 				})
 			})
 		})
