@@ -8,10 +8,12 @@ import HorizonCalPlugin from '../main';
 
 export interface HorizonCalSettings {
 	prefixPath: string;
+	categories: string[];
 }
 
 export const DEFAULT_SETTINGS: HorizonCalSettings = {
-	prefixPath: 'horizoncal'
+	prefixPath: 'horizoncal',
+	categories: ["meeting", "urgent", "travel", "project", "social"],
 }
 
 export class HorizonCalSettingsTab extends PluginSettingTab {

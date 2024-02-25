@@ -101,6 +101,12 @@ export class EventEditModal extends Modal {
 			type: "text",
 		});
 
+		new Setting(contentEl)
+			.setName("categories!")
+			.addButton((btn) => {
+				btn.onClick(() => new CategorySelectModal(this).open())
+			})
+
 		// FUTURE: we might wanna do some custom style around date and time things..
 		// The date related stuff should have reduced borders and margins between them.
 		// (Timezone might also deserve a fold to hide it, but I don't know how to do that with graceful accessibility yet.)
@@ -235,5 +241,34 @@ export class EventEditModal extends Modal {
 		// is unlikely even on desktop (which by default is otherwise a bit treacherous),
 		// so dropping data when we get here seems safe and reasonable to do.
 		contentEl.empty();
+	}
+}
+
+
+export class CategorySelectModal extends Modal {
+	constructor(parent: EventEditModal) {
+		super(parent.app);
+		this.parent = parent;
+	}
+
+	private parent: EventEditModal;
+
+
+	onOpen() {
+		this.containerEl.addClass("horizoncal");
+
+		// The set of options we'll render is the union of categories known in the config and anything previously here.
+		let options: string[] = []
+		options.push(...this.parent.plugin.settings.categories);
+		options.push(...this.parent.data.evtCat.valueStructured);
+		options.sort(); // TODO may want to flag these as originating from non-settings or not.  Visually.
+
+		this.contentEl.createEl("ul", {}, (el) => {
+			options.forEach((row) => {
+				el.createEl("li", {}, (el) => {
+					new Setting(el).addToggle((tog) => {}).setName(row)
+				})
+			})
+		})
 	}
 }

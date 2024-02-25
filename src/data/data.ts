@@ -8,8 +8,7 @@ import {
 	unknownAllowingUndefined,
 	unknownToStringCoercive,
 	unknownToStringListCoercive,
-	validateListOfNonemptyString,
-	validateString,
+	validateString
 } from "./datacontrol";
 
 import { DateTime, Duration, IANAZone } from 'luxon';
@@ -29,7 +28,7 @@ export class HCEvent {
 		let v = new HCEvent();
 		v.title = new Control("title", validateString, unknownToStringCoercive).updateFromUnknown(fm, 'title');
 		v.evtType = new Control("evtType", validateString, unknownToStringCoercive).updateFromUnknown(fm, 'evtType');
-		v.evtCat = new Control("evtCat", validateListOfNonemptyString, unknownToStringListCoercive).updateFromUnknown(fm, 'evtCat');
+		v.evtCat = new Control("evtCat", validateEvtCatList, unknownToStringListCoercive).updateFromUnknown(fm, 'evtCat');
 		v.evtDate = new Control("evtDate", validateDate, unknownToStringCoercive).updateFromUnknown(fm, 'evtDate');
 		v.evtTime = new ControlOptional("evtTime", validateTime, unknownToStringCoercive).updateFromUnknown(fm, 'evtTime');
 		v.evtTZ = new Control("evtTZ", validateTZ_defaultLocal, unknownAllowingUndefined(unknownToStringCoercive)).updateFromUnknown(fm, 'evtTZ');
@@ -94,7 +93,7 @@ export class HCEvent {
 
 	title: Control<string, string>;
 	evtType: ControlOptional<string, string>; // Deprecated.  Replaced by 'evtCat'.  May eventually be removed.
-	evtCat: Control<string[], string[]>;
+	evtCat: Control<string[], string[]>; // Primitive strings use tag syntax with "#evt/foo"; parsed data is just "foo" bare, beacuse that's what we mostly render.
 	evtDate: Control<string, DateTime>; // Only contains YMD components.
 	evtTime: ControlOptional<string, Duration>; // Only contains HHmm components.
 	evtTZ: Control<string | undefined, string>; // Named timezome.
@@ -226,6 +225,11 @@ function validateTZ_defaultLocal(namedZone: string | undefined): ValidationResul
 		return { structured: zn, simplified: zn }
 	}
 	return validateTZ(namedZone)
+}
+function validateEvtCatList(prim: string[]): ValidationResult<string[], string[]> {
+	let cleanedPrim = prim.filter((s) => s.length > 1).map((s) => s.startsWith("#evt/") ? s : "#evt/"+s ).sort().unique();
+	let structured = cleanedPrim.map((s) => s.substring(5));
+	return { structured: structured, simplified: cleanedPrim }
 }
 
 /*-------------------------------------------------------------*/
