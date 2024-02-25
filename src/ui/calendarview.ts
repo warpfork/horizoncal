@@ -65,7 +65,7 @@ export class HorizonCalView extends ItemView {
 				let fcEvts = hcEvts.map((hcEvt): EventInput => {
 					return {
 						id: hcEvt.loadedFrom,
-						title: hcEvt.title.valueRaw,
+						title: hcEvt.title.valuePrimitive,
 						// Turn our three-part time+date+timezone info into a single string we'll pass to FullCalendar.
 						// This is going to *lose precision* -- FC can't actually usefully handle the TZ info.
 						// (We'll diligently re-attach and persist TZ data every time we get any info back from FC.)
@@ -137,14 +137,14 @@ export class HorizonCalView extends ItemView {
 					// New event!
 					this.calUI.addEvent({
 						id: file.path,
-						title: hcEvt.title.valueRaw,
+						title: hcEvt.title.valuePrimitive,
 						start: hcEvt.getCompleteStartDt().toISO() as string,
 						end: hcEvt.getCompleteEndDt().toISO() as string,
 					})
 					// FIXME it gets a different default background because not event source; silly.
 					//  It seems we can give an EventSourceImpl handle as another param; worth?  Hm.  Probably.
 				} else {
-					fcEvt.setProp("title", hcEvt.title.valueRaw)
+					fcEvt.setProp("title", hcEvt.title.valuePrimitive)
 					fcEvt.setStart(hcEvt.getCompleteStartDt().toISO() as string)
 					fcEvt.setEnd(hcEvt.getCompleteEndDt().toISO() as string)
 				}
@@ -233,8 +233,8 @@ export class HorizonCalView extends ItemView {
 				// Shift the dates we got from fullcalendar back into the timezones this event specified.
 				//  Fullcalendar doesn't retain timezones -- it flattens everything to an offset only (because javascript Date forces that),
 				//   and it also shifts everything to the calendar-wide tz offset.  This is quite far from what we want.
-				let newStartDt = toLuxonDateTime(info.event.start as Date, this.calUI).setZone(hcEvt.evtTZ.valueParsed)
-				let newEndDt = toLuxonDateTime(info.event.end as Date, this.calUI).setZone(hcEvt.endTZ.valueParsed || hcEvt.evtTZ.valueParsed)
+				let newStartDt = toLuxonDateTime(info.event.start as Date, this.calUI).setZone(hcEvt.evtTZ.valueStructured)
+				let newEndDt = toLuxonDateTime(info.event.end as Date, this.calUI).setZone(hcEvt.endTZ.valueStructured || hcEvt.evtTZ.valueStructured)
 
 				// Stir our updated dates into the data.
 				// This roundtrips things through strings, which... may seem unnecessary?

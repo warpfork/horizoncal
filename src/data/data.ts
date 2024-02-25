@@ -1,7 +1,14 @@
 
 import { App, TAbstractFile, TFile } from "obsidian";
 
-import { Control, ControlOptional, ValidateResult, validateString } from "./datacontrol";
+import {
+	Control,
+	ControlOptional,
+	ValidationResult,
+	unknownAllowingUndefined,
+	unknownToStringCoercive,
+	validateString,
+} from "./datacontrol";
 
 import { DateTime, Duration, IANAZone } from 'luxon';
 
@@ -11,19 +18,21 @@ import { DateTime, Duration, IANAZone } from 'luxon';
 // Using HCEvent generally works by dropping frontmatter into it, as strings.
 // Then, you can ask for a validation check.
 export class HCEvent {
-	// Parse an HCEvent from a "frontmatter" object (or any `any`, really).
+	// Parse an HCEvent from a "frontmatter" object.
 	// Never returns an error, because all data fields store validation errors;
 	// get any accumulated issues by calling `validate` on the returned object.
-	static fromFrontmatter(fm: any): HCEvent {
+	// (In the wildest case that 'fm' is null or empty, you'll simply have a validation error on every single field.)
+	static fromFrontmatter(fm: unknown): HCEvent {
+		// Note that obsidian frontmatter gives you nulls for fields that present but have no apparent value.
 		let v = new HCEvent();
-		v.title = new Control("title", validateString).update(fm.title);
-		v.evtType = new Control("evtType", validateString).update(fm.evtType);
-		v.evtDate = new Control("evtDate", validateDate).update(fm.evtDate);
-		v.evtTime = new ControlOptional("evtTime", validateTime).update(fm.evtTime);
-		v.evtTZ = new Control("evtTZ", validateTZ_defaultLocal).update(fm.evtTZ);
-		v.endDate = new ControlOptional("endDate", validateDate).update(fm.endDate);
-		v.endTime = new ControlOptional("endTime", validateTime).update(fm.endTime);
-		v.endTZ = new ControlOptional("endTZ", validateTZ).update(fm.endTZ);
+		v.title = new Control("title", validateString, unknownToStringCoercive).updateFromUnknown(fm, 'title');
+		v.evtType = new Control("evtType", validateString, unknownToStringCoercive).updateFromUnknown(fm, 'evtType');
+		v.evtDate = new Control("evtDate", validateDate, unknownToStringCoercive).updateFromUnknown(fm, 'evtDate');
+		v.evtTime = new ControlOptional("evtTime", validateTime, unknownToStringCoercive).updateFromUnknown(fm, 'evtTime');
+		v.evtTZ = new Control("evtTZ", validateTZ_defaultLocal, unknownAllowingUndefined(unknownToStringCoercive)).updateFromUnknown(fm, 'evtTZ');
+		v.endDate = new ControlOptional("endDate", validateDate, unknownToStringCoercive).updateFromUnknown(fm, 'endDate');
+		v.endTime = new ControlOptional("endTime", validateTime, unknownToStringCoercive).updateFromUnknown(fm, 'endTime');
+		v.endTZ = new ControlOptional("endTZ", validateTZ, unknownToStringCoercive).updateFromUnknown(fm, 'endTZ');
 		return v;
 	}
 
@@ -108,16 +117,16 @@ export class HCEvent {
 
 	// Returns a complete DateTime with the date, the time, and the timezone assembled.
 	getCompleteStartDt(): DateTime {
-		return this.evtDate.valueParsed.plus(this.evtTime.valueParsed!).setZone(this.evtTZ.valueRaw, { keepLocalTime: true })
+		return this.evtDate.valueStructured.plus(this.evtTime.valueStructured!).setZone(this.evtTZ.valuePrimitive, { keepLocalTime: true })
 	}
 
 	// Returns a complete DateTime with the date, the time, and the timezone assembled.
 	// This function handles defaulting to the start day and start timezone.
 	getCompleteEndDt(): DateTime {
-		let v = this.evtDate.valueParsed;
-		v = (this.endDate.valueParsed) ? this.endDate.valueParsed : v;
-		v = v.plus(this.endTime.valueParsed!);
-		v = (this.endTZ.valueRaw) ? v.setZone(this.endTZ.valueRaw, { keepLocalTime: true }) : v.setZone(this.evtTZ.valueRaw, { keepLocalTime: true });
+		let v = this.evtDate.valueStructured;
+		v = (this.endDate.valueStructured) ? this.endDate.valueStructured : v;
+		v = v.plus(this.endTime.valueStructured!);
+		v = (this.endTZ.valuePrimitive) ? v.setZone(this.endTZ.valuePrimitive, { keepLocalTime: true }) : v.setZone(this.evtTZ.valuePrimitive, { keepLocalTime: true });
 		return v;
 	}
 
@@ -152,12 +161,12 @@ export class HCEvent {
 			switch (control.name) {
 				case "endDate":
 					// Skip storing this, even if it exists, if it's the same as the start date.
-					if (!this.endDate.valueParsed) {
+					if (!this.endDate.valueStructured) {
 						return
 					}
-					if (this.evtDate.valueParsed.year == this.endDate.valueParsed.year
-						&& this.evtDate.valueParsed.month == this.endDate.valueParsed.month
-						&& this.evtDate.valueParsed.day == this.endDate.valueParsed.day) {
+					if (this.evtDate.valueStructured.year == this.endDate.valueStructured.year
+						&& this.evtDate.valueStructured.month == this.endDate.valueStructured.month
+						&& this.evtDate.valueStructured.day == this.endDate.valueStructured.day) {
 						return
 					}
 					break;
@@ -165,7 +174,7 @@ export class HCEvent {
 
 			// For everyone that got here: yep, be saved.
 			if (control.isValid) {
-				fm[control.name] = control.valueRaw
+				fm[control.name] = control.valuePrimitive
 			}
 		})
 
@@ -179,38 +188,37 @@ export class HCEvent {
 	}
 }
 
-function validateDate(ymd: string): ValidateResult<string, DateTime> {
+function validateDate(ymd: string): ValidationResult<string, DateTime> {
 	const fmt = "yyyy-MM-dd"
-	ymd += ""; // Violently coerce to string.
 	let parsed = DateTime.fromFormat(ymd, fmt);
 	if (parsed.invalidReason) {
 		return { error: new Error(parsed.invalidReason + ": " + parsed.invalidExplanation as string) }
 	}
 	return {
-		parsed: parsed,
+		structured: parsed,
 		simplified: parsed.toFormat(fmt),
 	}
 }
-function validateTime(hhmm: string): ValidateResult<string, Duration> {
+function validateTime(hhmm: string): ValidationResult<string, Duration> {
 	let parsed = DateTime.fromFormat(hhmm, "HH:mm");
 	if (parsed.invalidReason) {
 		return { error: Error(parsed.invalidReason + ": " + parsed.invalidExplanation as string) }
 	}
 	return {
-		parsed: Duration.fromObject({ hour: parsed.hour, minute: parsed.minute }),
+		structured: Duration.fromObject({ hour: parsed.hour, minute: parsed.minute }),
 		simplified: parsed.toFormat("HH:mm"),
 	}
 }
-function validateTZ(namedZone: string): ValidateResult<string, string> {
+function validateTZ(namedZone: string): ValidationResult<string, string> {
 	if (IANAZone.isValidZone(namedZone)) {
-		return { parsed: namedZone }
+		return { structured: namedZone }
 	}
 	return { error: new Error(`"${namedZone}" is not a known time zone identifier`) }
 }
-function validateTZ_defaultLocal(namedZone: string | undefined): ValidateResult<string | undefined, string> {
+function validateTZ_defaultLocal(namedZone: string | undefined): ValidationResult<string | undefined, string> {
 	if (!namedZone) {
 		let zn = DateTime.local().zoneName;
-		return { parsed: zn, simplified: zn }
+		return { structured: zn, simplified: zn }
 	}
 	return validateTZ(namedZone)
 }
@@ -221,9 +229,9 @@ function validateTZ_defaultLocal(namedZone: string | undefined): ValidateResult<
 export class HCEventFilePath {
 	static fromEvent(hcEvt: HCEvent): HCEventFilePath {
 		return new HCEventFilePath({
-			dirs: hcEvt.evtDate.valueParsed.toFormat("yyyy/MM/dd"),
-			fprefix: "evt-" + hcEvt.evtDate.valueRaw,
-			slug: slugify(hcEvt.title.valueRaw),
+			dirs: hcEvt.evtDate.valueStructured.toFormat("yyyy/MM/dd"),
+			fprefix: "evt-" + hcEvt.evtDate.valuePrimitive,
+			slug: slugify(hcEvt.title.valuePrimitive),
 		})
 	}
 

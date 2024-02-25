@@ -36,12 +36,12 @@ export class EventEditModal extends Modal {
 			contentEl.createEl("h1", { text: "New event" });
 		}
 
-		let widgeteer = <TParsed>(params: {
-			// Consider it constrained that "TParsed as DateTime, when type=='date'".
+		let widgeteer = <TStructured>(params: {
+			// Consider it constrained that "TStructured as DateTime, when type=='date'".
 			// (I think that could be done with a sufficiently massive union type,
 			// but I'm not really sure it's worth it :))
 			// (... huh, ends up not mattering, because we successfully only handle raws here.  nice.)
-			prop: Control<string | undefined, TParsed>
+			prop: Control<string | undefined, TStructured>
 			name: string
 			desc?: string
 			type: "text" | "date" | "time" | "toggle"
@@ -51,7 +51,7 @@ export class EventEditModal extends Modal {
 			switch (params.type) {
 				case "text":
 					setting.addText((comp) => comp
-						.setValue(params.prop.valueRaw!)
+						.setValue(params.prop.valuePrimitive!)
 						.onChange((value) => {
 							let err = params.prop.tryUpdate(value)
 							comp.inputEl.toggleClass("invalid", !!err)
@@ -62,7 +62,7 @@ export class EventEditModal extends Modal {
 						// Unfortunate fact about date elements: they use the brower's locale for formatting.
 						// I don't know how to control that in electron.  I don't think it's possible.
 						// (I appreciate the user-choice _concept_ there, but in practice... system locale is a PITA to control and I don't think this plays out in the user's favor in reality.)
-						{ type: "date", value: params.prop.valueRaw },
+						{ type: "date", value: params.prop.valuePrimitive },
 						(el) => {
 							el.addEventListener('change', () => {
 								let err = params.prop.tryUpdate(el.value)
@@ -72,7 +72,7 @@ export class EventEditModal extends Modal {
 					break;
 				case "time":
 					setting.controlEl.createEl("input",
-						{ type: "time", value: params.prop.valueRaw },
+						{ type: "time", value: params.prop.valuePrimitive },
 						(el) => {
 							el.addEventListener('change', () => {
 								let err = params.prop.tryUpdate(el.value)

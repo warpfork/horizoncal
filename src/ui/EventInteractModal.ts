@@ -36,7 +36,7 @@ export class EventInteractModal extends Modal {
 		containerEl.addClass("horizoncal", "hc-evt-interact-modal");
 
 		titleEl.createSpan({ text: "viewing event:" });
-		titleEl.createEl("h4", { text: this.data.title.valueRaw });
+		titleEl.createEl("h4", { text: this.data.title.valuePrimitive });
 		// TODO display: slightly more basic facts
 
 		contentEl.createDiv({ cls: "control-wide" }, (el) => {
