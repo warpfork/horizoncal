@@ -338,6 +338,11 @@ export function validateString(x: string): ValidationResult<string, string> {
 	return { structured: x }
 }
 
+export function validateListOfNonemptyString(x: string[]): ValidationResult<string[], string[]> {
+	let onlyNonempties = x.filter((s) => s.length > 1)
+	return { structured: onlyNonempties, simplified: onlyNonempties }
+}
+
 // You probably don't need to use this yourself -- it will be applied automatically to any unknownHandlerFn given to a ControlOptional constructor.
 // You might want it if doing advanced constructions like allowing undefined in TPrimitive but not in TStructured, though.
 export function unknownAllowingUndefined<TPrimitive>(fn: FromUnknownFn<TPrimitive>): FromUnknownFn<TPrimitive | undefined> {
@@ -365,4 +370,17 @@ export function unknownToStringCoercive(x: unknown): string {
 		return ""
 	}
 	return x + ""
+}
+
+export function unknownToStringListCoercive(x: unknown): string[] {
+	if (Array.isArray(x))
+		return x.map((v) => unknownToStringCoercive(v))
+
+	if (typeof x == "string")
+		return [x]
+
+	if (x === undefined || x === null)
+		return []
+
+	return [unknownToStringCoercive(x)]
 }
