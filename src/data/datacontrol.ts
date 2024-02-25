@@ -327,6 +327,9 @@ export function validationOptional<TPrimitive, TStructured>(fn: ValidationFn<TPr
 		if (x === undefined) {
 			return { structured: undefined, simplified: undefined }
 		}
+		if (typeof x == "string" && x === "") {
+			return { structured: undefined, simplified: undefined }
+		}
 		return fn(x)
 	}
 }
