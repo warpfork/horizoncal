@@ -61,9 +61,9 @@ export class EventInteractModal extends Modal {
 					//
 					// - If there's an existing editor pane open to that file: just focus it.
 					// - If we have to open one: *prefer to do it as a tab next to anything else open in the horizoncal dir*.
-					// - If no better match, we'll do roughly the default system thing, which happens to be
-					//    a new tab that will appear as a sibling of the calendar view itself (if you're in a tab).
-					//     (TODO: consider doing a split by default instead... at least in desktop.)
+					// - If no editors are open to that zone at all, we're going to create a new split,
+					//    so that they end up visually near the calendar, and don't cause the calendar to totally disappear.
+					//    (On mobile, this has a much more limited effect: the tabs drawer gets a divider line in it.  Views are still fullscreen.)
 					let foundExisting = false
 					let sameZone: WorkspaceLeaf | undefined;
 					this.app.workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
@@ -128,9 +128,10 @@ export class EventInteractModal extends Modal {
 							this.plugin.app.workspace.setActiveLeaf(sameZone)
 							targetLeaf = this.plugin.app.workspace.getLeaf('tab')
 						} else {
-							// Last fallback.  Just get a new tab close to the current focus.
-							// This will probably result in the calendar view getting covered up; that's okay.
-							targetLeaf = this.plugin.app.workspace.getLeaf('tab')
+							// If there are no other relevant views already open: we're going to make a new split for you.
+							// Since my typical usage is timegrid, ditching vertical space is fine (but losing width would cause a jarring repaint),
+							// so we'll use a "horizonal" split (horizonal refers to the line that will appear, apparently).
+							targetLeaf = this.plugin.app.workspace.getLeaf('split', 'horizontal')
 						}
 						targetLeaf.openFile(file, { active: true });
 					}
