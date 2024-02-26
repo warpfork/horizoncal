@@ -13,6 +13,8 @@ import {
 
 import { EventInput } from "@fullcalendar/core";
 import { DateTime, Duration, IANAZone } from 'luxon';
+import { EventCategoryProperties } from "../settings/categories";
+import { HorizonCalSettings } from "../settings/settings";
 
 // HCEvent is a holder for event properties.
 //
@@ -135,24 +137,28 @@ export class HCEvent {
 		return v;
 	}
 
-	// Returns a color as a hex string (includes leading "#").
-	// This is a format suitable for giving to fullcalendar's API.
-	getColor(): string {
-		if (this.evtCat.valueStructured.contains("travel")) {
-			return '#566478';
-		}
-		return '#146792'
-	}
-
 	// Create a FullCalendar-style data object from this HCEvent.
 	// This can be used directly to create events in FullCalendar,
 	// either by yielding from an FC `EventSource`, or with the `addEvent` method,
 	// _or_ it can be used to update existing events (with admittedly a bit of pain,
 	// since that requires plucking fields back out to bounce through `setProp` calls).
-	toFCdata(): EventInput {
+	//
+	// This requires plugin settings as a parameter, beacuse color choices are determined
+	// by the configuration for categories.
+	// (Changing plugin settings should generally be followed by a full refresh of FulLCalendar.)
+	toFCdata(settings: HorizonCalSettings): EventInput {
 		if (!this.loadedFrom) {
 			throw new Error("event will not have an ID")
 		}
+		let cats = [...this.evtCat.valueStructured];
+		cats.sort((a, b) => ((settings.categories[a]?.effectPriority || 0) - (settings.categories[b]?.effectPriority || 0)))
+		let applicableProps: EventCategoryProperties = {
+			color: "#146792",
+		};
+		cats.forEach((cat) => {
+			Object.assign(applicableProps, settings.categories[cat])
+		})
+
 		return {
 			id: this.loadedFrom,
 			title: this.title.valuePrimitive,
@@ -161,7 +167,7 @@ export class HCEvent {
 			// (We'll diligently re-attach and persist TZ data every time we get any info back from FC.)
 			start: this.getCompleteStartDt().toISO() as string,
 			end: this.getCompleteEndDt().toISO() as string,
-			color: this.getColor(),
+			color: applicableProps.color,
 		}
 	}
 

@@ -5,15 +5,33 @@ import {
 } from 'obsidian';
 
 import HorizonCalPlugin from '../main';
+import { EventCategorySettings } from './categories';
 
 export interface HorizonCalSettings {
 	prefixPath: string;
-	categories: string[];
+	categories: Record<string, EventCategorySettings>;
 }
 
 export const DEFAULT_SETTINGS: HorizonCalSettings = {
 	prefixPath: 'horizoncal',
-	categories: ["meeting", "urgent", "travel", "project", "social"],
+	categories: {
+		"due": {
+			color: "#FF0000",
+			effectPriority: 10,
+		},
+		"meeting": {
+			color: "#5DDD44",
+		},
+		"project": {
+			color: "#3874EB"
+		},
+		"social": {
+			color: "#FFEC6E",
+		},
+		"travel": {
+			color: "#555555",
+		},
+	},
 }
 
 export class HorizonCalSettingsTab extends PluginSettingTab {

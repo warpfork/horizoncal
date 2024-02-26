@@ -270,7 +270,7 @@ export class CategorySelectModal extends Modal {
 
 		// The set of options we'll render is the union of categories known in the config and anything previously here.
 		let options: string[] = []
-		options.push(...this.parent.plugin.settings.categories);
+		options.push(...Object.keys(this.parent.plugin.settings.categories));
 		options.push(...this.parent.data.evtCat.valueStructured);
 		options.sort(); // TODO may want to flag these as originating from non-settings or not.  Visually.
 		options = options.unique();

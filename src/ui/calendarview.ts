@@ -62,7 +62,7 @@ export class HorizonCalView extends ItemView {
 					toLuxonDateTime(info.start, this.calUI),
 					toLuxonDateTime(info.end, this.calUI)
 				);
-				let fcEvts = hcEvts.map((hcEvt): EventInput => hcEvt.toFCdata())
+				let fcEvts = hcEvts.map((hcEvt): EventInput => hcEvt.toFCdata(this.plugin.settings))
 				successCallback(fcEvts)
 				//console.log("---- query journey ended")
 				return null
@@ -126,7 +126,7 @@ export class HorizonCalView extends ItemView {
 				let fcEvt = this.calUI.getEventById(file.path);
 				if (fcEvt == null) {
 					// New event!
-					this.calUI.addEvent(hcEvt.toFCdata())
+					this.calUI.addEvent(hcEvt.toFCdata(this.plugin.settings))
 					// FIXME it gets a different default background because not event source; silly.
 					//  It seems we can give an EventSourceImpl handle as another param; worth?  Hm.  Probably.
 				} else {
@@ -137,7 +137,7 @@ export class HorizonCalView extends ItemView {
 					// Could we just nuke and replace the event?
 					// Maybe, but in some cases that might fuck with the UI;
 					// for example, on mobile, you have to hold-select something to make it adjustable.
-					let newData: EventInput = hcEvt.toFCdata();
+					let newData: EventInput = hcEvt.toFCdata(this.plugin.settings);
 					for (let prop in newData) {
 						if (prop == "id") continue; // Already sure of that thanks.
 						if (prop == "start") { fcEvt.setStart(newData[prop]!); continue }
