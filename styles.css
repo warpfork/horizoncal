@@ -82,6 +82,17 @@ the same as the underlying library; ugh), then their styles affect us.
 	color: color-mix(in srgb, var(--text-on-accent) 30%, #333);
 }
 
+.horizoncal button.save {
+	color: var(--text-success);
+	padding: 1em 2em;
+}
+
+.horizoncal button.cancel {
+	color: var(--text-error);
+	padding: 1em 1em;
+}
+
+
 
 
 /*=====================================*/

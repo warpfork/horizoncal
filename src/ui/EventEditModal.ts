@@ -156,6 +156,7 @@ export class EventEditModal extends Modal {
 			.addButton(btn => {
 				btn.setIcon("checkmark");
 				btn.setTooltip("Save");
+				btn.setClass("save");
 				btn.onClick(async () => {
 					await this._onSubmit();
 				});
@@ -164,6 +165,7 @@ export class EventEditModal extends Modal {
 			.addButton(btn => {
 				btn.setIcon("cross");
 				btn.setTooltip("Cancel");
+				btn.setClass("cancel");
 				btn.onClick(() => {
 					this.close();
 				});
