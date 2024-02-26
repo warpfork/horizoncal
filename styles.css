@@ -98,11 +98,12 @@ the same as the underlying library; ugh), then their styles affect us.
 /*=====================================*/
 /* Styling for modals: */
 
+/* EventInteractModal can be narrower than average.  It's just a routing menu. */
 .hc-evt-interact-modal .modal {
-	/* on desktop, this can be narrower than most modals. */
 	width: calc(0.7 * var(--dialog-width));
 }
 
+/* EventInteractModal on mobile especially needs shrinkage. */
 .is-phone .hc-evt-interact-modal .modal {
 	/* The defaults for modals on mobile are very screen-filly.  That's not appropriate for this one. */
 	/* Sidenote: at least in my current version of Obsidian on android, 'bottom' doesn't appear to work correctly here.  But it does in desktop Electron when told to emulate mobile.  Dunno. */
@@ -116,6 +117,9 @@ the same as the underlying library; ugh), then their styles affect us.
 	border: var(--modal-border-width) solid var(--modal-border-color);
 }
 
+/* Category selection is a simple process, and semantically a child of EventEditModal,
+   so it should have a reduced size, such that the EventEditModal is still visible behind it. */
+/* (This manifests as a left sidebar vibe on mobile, but that's... kinda fine?) */
 .hc-category-selection-modal .modal {
 	width: calc(0.65 * var(--dialog-width));
 	max-width: calc(0.85 * var(--dialog-max-width));
