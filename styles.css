@@ -117,6 +117,16 @@ the same as the underlying library; ugh), then their styles affect us.
 	border: var(--modal-border-width) solid var(--modal-border-color);
 }
 
+/* EventEditModal needs restyling of its background, because we obliterate the element that usually has the fade during our quest to reduce misclick dangers. */
+.hc-evt-edit-modal.modal-container {
+	/* The default would be more like `{ backgroundColor: "var(--background-modifier-cover)" }`, but let's have some fun anyway.  I like blue. */
+	background-color: #000022cc;
+}
+.hc-evt-edit-modal .modal {
+	/* No reason for this.  I just like it being distinctive. */
+	border: 2px solid #F0F;
+}
+
 /* Category selection is a simple process, and semantically a child of EventEditModal,
    so it should have a reduced size, such that the EventEditModal is still visible behind it. */
 /* (This manifests as a left sidebar vibe on mobile, but that's... kinda fine?) */

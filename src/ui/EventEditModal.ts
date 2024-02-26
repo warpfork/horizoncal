@@ -29,10 +29,10 @@ export class EventEditModal extends Modal {
 
 	onOpen() {
 		this._defragilify();
-		this._style();
 
 		let { contentEl, containerEl } = this;
 		containerEl.addClass("horizoncal");
+		containerEl.addClass("hc-evt-edit-modal");
 		if (this.data.loadedFrom) {
 			contentEl.createEl("h1", { text: "Edit event" });
 		} else {
@@ -190,13 +190,6 @@ export class EventEditModal extends Modal {
 			let child = this.containerEl.children[i];
 			if (child.hasClass("modal-bg")) { child.remove() }
 		}
-	}
-	_style() {
-		// I have capricious opinions.
-		this.modalEl.setCssStyles({ border: "2px solid #F0F" })
-		// We need *some* background color on the container, because we nuked the default fadeout during defragilify.
-		// The default would be more like `{ backgroundColor: "var(--background-modifier-cover)" }`, but let's have some fun anyway.
-		this.containerEl.setCssStyles({ backgroundColor: "#000022cc" })
 	}
 	async _onSubmit() {
 		// Check validation again.
