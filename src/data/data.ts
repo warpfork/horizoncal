@@ -135,6 +135,15 @@ export class HCEvent {
 		return v;
 	}
 
+	// Returns a color as a hex string (includes leading "#").
+	// This is a format suitable for giving to fullcalendar's API.
+	getColor(): string {
+		if (this.evtCat.valueStructured.contains("travel")) {
+			return '#566478';
+		}
+		return '#146792'
+	}
+
 	// Create a FullCalendar-style data object from this HCEvent.
 	// This can be used directly to create events in FullCalendar,
 	// either by yielding from an FC `EventSource`, or with the `addEvent` method,
@@ -152,6 +161,7 @@ export class HCEvent {
 			// (We'll diligently re-attach and persist TZ data every time we get any info back from FC.)
 			start: this.getCompleteStartDt().toISO() as string,
 			end: this.getCompleteEndDt().toISO() as string,
+			color: this.getColor(),
 		}
 	}
 
