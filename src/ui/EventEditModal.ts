@@ -25,6 +25,8 @@ export class EventEditModal extends Modal {
 	plugin: HorizonCalPlugin;
 	data: HCEvent;
 
+	categoriesEl: HTMLElement; // initialized onOpen, stored so a CategorySelectModal can grab it to update it.
+
 	onOpen() {
 		this._defragilify();
 		this._style();
@@ -106,6 +108,11 @@ export class EventEditModal extends Modal {
 			.setName("categories!")
 			.addButton((btn) => {
 				btn.onClick(() => new CategorySelectModal(this).open())
+			}).controlEl.createEl("span", {}, (el) => {
+				// TODO this needs style.  like, a lot.
+				el.setText(this.data.evtCat.valueStructured + "");
+				// Store it so it's mutable.  The CategorySelectModal will live-update it.
+				this.categoriesEl = el;
 			})
 
 		// FUTURE: we might wanna do some custom style around date and time things..
@@ -291,10 +298,9 @@ export class CategorySelectModal extends Modal {
 									next.remove("#evt/" + row)
 								}
 								this.parent.data.evtCat.update(next)
-								// TODO trigger relevant re-render on parent too.
+								this.parent.categoriesEl.setText(this.parent.data.evtCat.valueStructured + ""); // TODO: make a more coherent element here, with an update method.
 							});
 						})
-
 				})
 			})
 		})
