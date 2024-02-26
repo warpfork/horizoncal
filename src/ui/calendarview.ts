@@ -62,17 +62,7 @@ export class HorizonCalView extends ItemView {
 					toLuxonDateTime(info.start, this.calUI),
 					toLuxonDateTime(info.end, this.calUI)
 				);
-				let fcEvts = hcEvts.map((hcEvt): EventInput => {
-					return {
-						id: hcEvt.loadedFrom,
-						title: hcEvt.title.valuePrimitive,
-						// Turn our three-part time+date+timezone info into a single string we'll pass to FullCalendar.
-						// This is going to *lose precision* -- FC can't actually usefully handle the TZ info.
-						// (We'll diligently re-attach and persist TZ data every time we get any info back from FC.)
-						start: hcEvt.getCompleteStartDt().toISO() as string,
-						end: hcEvt.getCompleteEndDt().toISO() as string,
-					}
-				})
+				let fcEvts = hcEvts.map((hcEvt): EventInput => hcEvt.toFCdata())
 				successCallback(fcEvts)
 				//console.log("---- query journey ended")
 				return null
@@ -132,21 +122,28 @@ export class HorizonCalView extends ItemView {
 				// If not: we add it one.
 				// (TODO: should filter for the relevance of date.)
 				let hcEvt = HCEvent.fromFrontmatter(cache.frontmatter);
+				hcEvt.loadedFrom = file.path;
 				let fcEvt = this.calUI.getEventById(file.path);
 				if (fcEvt == null) {
 					// New event!
-					this.calUI.addEvent({
-						id: file.path,
-						title: hcEvt.title.valuePrimitive,
-						start: hcEvt.getCompleteStartDt().toISO() as string,
-						end: hcEvt.getCompleteEndDt().toISO() as string,
-					})
+					this.calUI.addEvent(hcEvt.toFCdata())
 					// FIXME it gets a different default background because not event source; silly.
 					//  It seems we can give an EventSourceImpl handle as another param; worth?  Hm.  Probably.
 				} else {
-					fcEvt.setProp("title", hcEvt.title.valuePrimitive)
-					fcEvt.setStart(hcEvt.getCompleteStartDt().toISO() as string)
-					fcEvt.setEnd(hcEvt.getCompleteEndDt().toISO() as string)
+					// Updating takes a little different road.
+					// Most things can be resynced through 'setProp';
+					// the start and end dates require specific methods, due to reasons.
+					//
+					// Could we just nuke and replace the event?
+					// Maybe, but in some cases that might fuck with the UI;
+					// for example, on mobile, you have to hold-select something to make it adjustable.
+					let newData: EventInput = hcEvt.toFCdata();
+					for (let prop in newData) {
+						if (prop == "id") continue; // Already sure of that thanks.
+						if (prop == "start") { fcEvt.setStart(newData[prop]!); continue }
+						if (prop == "end") { fcEvt.setEnd(newData[prop]!); continue }
+						fcEvt.setProp(prop, newData[prop])
+					}
 				}
 
 				// TODO you may also want to hook a rename consideration on this.
@@ -267,6 +264,10 @@ export class HorizonCalView extends ItemView {
 				await this.plugin.app.fileManager.renameFile(file, `${this.plugin.settings.prefixPath}/${wholePath}`)
 				info.event.setProp("id", `${this.plugin.settings.prefixPath}/${wholePath}`) // FIXME canonicalization check, double slash would be bad here.
 			}
+
+			// Note that either (or indeed, both) of the above two filesystem updates
+			// may cause change detection hooks to... propagate the updated values back to FullCalendar again!
+			// _This turns out to be fine_, because it's effectively idempotent.
 		}
 
 		this.calUI = new Calendar(this.calUIEl, {

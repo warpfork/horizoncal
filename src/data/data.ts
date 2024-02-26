@@ -11,6 +11,7 @@ import {
 	validateString
 } from "./datacontrol";
 
+import { EventInput } from "@fullcalendar/core";
 import { DateTime, Duration, IANAZone } from 'luxon';
 
 // HCEvent is a holder for event properties.
@@ -132,6 +133,26 @@ export class HCEvent {
 		v = v.plus(this.endTime.valueStructured!);
 		v = (this.endTZ.valuePrimitive) ? v.setZone(this.endTZ.valuePrimitive, { keepLocalTime: true }) : v.setZone(this.evtTZ.valuePrimitive, { keepLocalTime: true });
 		return v;
+	}
+
+	// Create a FullCalendar-style data object from this HCEvent.
+	// This can be used directly to create events in FullCalendar,
+	// either by yielding from an FC `EventSource`, or with the `addEvent` method,
+	// _or_ it can be used to update existing events (with admittedly a bit of pain,
+	// since that requires plucking fields back out to bounce through `setProp` calls).
+	toFCdata(): EventInput {
+		if (!this.loadedFrom) {
+			throw new Error("event will not have an ID")
+		}
+		return {
+			id: this.loadedFrom,
+			title: this.title.valuePrimitive,
+			// Turn our three-part time+date+timezone info into a single string we'll pass to FullCalendar.
+			// This is going to *lose precision* -- FC can't actually usefully handle the TZ info.
+			// (We'll diligently re-attach and persist TZ data every time we get any info back from FC.)
+			start: this.getCompleteStartDt().toISO() as string,
+			end: this.getCompleteEndDt().toISO() as string,
+		}
 	}
 
 	// Mutate (!) the given object to contain our data.
