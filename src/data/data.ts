@@ -258,7 +258,7 @@ function validateTZ_defaultLocal(namedZone: string | undefined): ValidationResul
 	return validateTZ(namedZone)
 }
 function validateEvtCatList(prim: string[]): ValidationResult<string[], string[]> {
-	let cleanedPrim = prim.filter((s) => s.length > 1).map((s) => s.startsWith("#evt/") ? s : "#evt/"+s ).sort().unique();
+	let cleanedPrim = prim.filter((s) => s.length > 1).map((s) => s.startsWith("#evt/") ? s : "#evt/" + s).sort().unique();
 	let structured = cleanedPrim.map((s) => s.substring(5));
 	return { structured: structured, simplified: cleanedPrim }
 }
