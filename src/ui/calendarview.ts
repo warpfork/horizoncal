@@ -261,7 +261,20 @@ export class HorizonCalView extends ItemView {
 					// TODO bother to react better to other errors.
 					await this.plugin.app.vault.createFolder(`${this.plugin.settings.prefixPath}/${path.dirs}`)
 				} catch { }
-				await this.plugin.app.fileManager.renameFile(file, `${this.plugin.settings.prefixPath}/${wholePath}`)
+				// FIXME: filename collision handling needs a better definition.
+				//  Right now, we _already updated_ the frontmatter in the file (and that's a different filesystem atomicity phase),
+				//  so we can end up with the filename not being in sync.
+				//  This is surprisingly non-catestrophic (as in, doesn't instantly destroy user data or break the UI),
+				//    as long as we still keep editing the original path...
+				//  But it's still not _good_, because it means when reopening the calendar,
+				//    the event might not get loaded if its old path was for a day that's not in view.
+				try {
+					await this.plugin.app.fileManager.renameFile(file, `${this.plugin.settings.prefixPath}/${wholePath}`)
+				} catch (error) {
+					alert("Error: could not move event file -- " + error
+						+ "\n\nThis may not cause immediate problems but may cause the event to not be loaded by functions using time windows.");
+					return
+				}
 				info.event.setProp("id", `${this.plugin.settings.prefixPath}/${wholePath}`) // FIXME canonicalization check, double slash would be bad here.
 			}
 

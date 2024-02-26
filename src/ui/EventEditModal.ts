@@ -215,8 +215,15 @@ export class EventEditModal extends Modal {
 				// TODO bother to react better to other errors.
 				await this.plugin.app.vault.createFolder(`${this.plugin.settings.prefixPath}/${path.dirs}`)
 			} catch { }
-			// FIXME: file-already-exists comes up here as a thrown exception.  It should at least be reported better.
-			file = await this.app.vault.create(`${this.plugin.settings.prefixPath}/${path.wholePath}`, "")
+			// FIXME: file-already-exists should be handled in a less awful way.
+			//  Right now, we balk, and don't do anything destructive (on disk nor in UI), but it doesn't offer good guidance.
+			try {
+				file = await this.app.vault.create(`${this.plugin.settings.prefixPath}/${path.wholePath}`, "")
+			} catch (error) {
+				alert("Error: could not create new event file -- " + error
+					+ "\n\nPick a title for the event that's unique in its day!");
+				return
+			}
 		}
 
 		await this.app.fileManager.processFrontMatter(file, (fileFm: any): void => {
