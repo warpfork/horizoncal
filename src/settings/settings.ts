@@ -9,7 +9,7 @@ import { EventCategorySettings } from './categories';
 
 export interface HorizonCalSettings {
 	prefixPath: string;
-	categories: Record<string, EventCategorySettings>;
+	categories: EventCategorySettings;
 }
 
 export const DEFAULT_SETTINGS: HorizonCalSettings = {
