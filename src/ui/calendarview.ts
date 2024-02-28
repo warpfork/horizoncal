@@ -184,7 +184,7 @@ export class HorizonCalView extends ItemView {
 	}
 
 	async onResize() {
-		this.calUI.render() // `updateSize()` might be enough, but, abundance of caution.
+		this.calUI.updateSize() // `render()` would be the more aggressive choice, but shouldn't be necessary.
 	}
 
 	async onClose() {
