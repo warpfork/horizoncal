@@ -43,6 +43,8 @@ export default class HorizonCalPlugin extends Plugin {
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new HorizonCalSettingsTab(this.app, this));
+
+		// FUTURE: registerHoverLinkSource -- we should be able to offer neat previews of event files.
 	}
 
 	onunload() {

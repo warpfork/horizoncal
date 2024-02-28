@@ -96,7 +96,7 @@ export class HCEvent {
 
 	title: Control<string, string>;
 	evtType: ControlOptional<string, string>; // Deprecated.  Replaced by 'evtCat'.  May eventually be removed.
-	evtCat: Control<string[], string[]>; // Primitive strings use tag syntax with "#evt/foo"; parsed data is just "foo" bare, beacuse that's what we mostly render.
+	evtCat: Control<string[], string[]>; // Primitive strings use tag syntax with "#evt/foo"; parsed data is just "foo" bare, beacuse that's what we mostly render.  Optional primarily because prop editor makes it undefined when deleting last element.
 	evtDate: Control<string, DateTime>; // Only contains YMD components.
 	evtTime: ControlOptional<string, Duration>; // Only contains HHmm components.
 	evtTZ: Control<string | undefined, string>; // Named timezome.
