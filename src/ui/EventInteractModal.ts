@@ -56,7 +56,7 @@ export class EventInteractModal extends Modal {
 		})
 		contentEl.createDiv({ cls: "control-wide" }, (el) => {
 			new ButtonComponent(el).setButtonText("open in markdown editor")
-				.onClick((evt) => {
+				.onClick(async (evt) => {
 					// We're gonan do a couple searches to find the least-surprsing place to open this.
 					//
 					// - If there's an existing editor pane open to that file: just focus it.
@@ -133,7 +133,7 @@ export class EventInteractModal extends Modal {
 							// so we'll use a "horizonal" split (horizonal refers to the line that will appear, apparently).
 							targetLeaf = this.plugin.app.workspace.getLeaf('split', 'horizontal')
 						}
-						targetLeaf.openFile(file, { active: true });
+						await targetLeaf.openFile(file, { active: true });
 					}
 					this.close();
 				})
