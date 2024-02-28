@@ -1,4 +1,5 @@
 import {
+	ButtonComponent,
 	CachedMetadata,
 	ItemView,
 	Menu,
@@ -77,7 +78,74 @@ export class HorizonCalView extends ItemView {
 		this.viewContentEl = this.containerEl.children[1];
 		this.viewContentEl.empty();
 		this.viewContentEl.addClass("horizoncal");
+		let viewNavEl = this.viewContentEl.createEl("div");
 		this.calUIEl = this.viewContentEl.createEl("div");
+
+		new ButtonComponent(viewNavEl)
+			.setButtonText("<-<-")
+			.setTooltip("shift view into past (large step)")
+		new ButtonComponent(viewNavEl)
+			.setButtonText("<-")
+			.setTooltip("shift view into past (small step)")
+		let resizeBtn = new ButtonComponent(viewNavEl)
+			.setButtonText("<‡‡‡>")
+			.setTooltip("expand/contract view")
+		resizeBtn.buttonEl.setCssProps({ "margin": "0em 1em" })
+		resizeBtn.onClick((evt) => {
+			console.log(evt)
+			// So I want the effect of a menu (positional, click anywhere else dismisses, etc,
+			// but I also want to definltely put html components in it (more buttons -- in a grid layout!),
+			// and I'm not sure I can get that out of this Menu type.
+			// Because it's worried about being able to have a native mode, it doesn't admit anything about HTML.
+			//
+			// Hm.  I guess I don't want button clicks to close this one either.
+			// So I want.. something considerably different.
+			//
+			// let m = new Menu()
+			// 	.addItem((mitem) => {
+			// 		mitem
+			// 			.setTitle("hewwo")
+			// 			.setIcon("calendar")
+			// 			.onClick(async () => {
+			// 				alert("yipe!")
+			// 			});
+			// 	})
+			// 	.addSeparator()
+			//
+			// Menus are rendered as a new top-level element, entirely outside and sibling to the entire 'app-container' div.
+			// If you set a 'width' property below, you have to offset 'x' by it, for some reason.
+			// m.showAtPosition({ x: evt.pageX, y: evt.pageY })
+			// I think I'd rather position this in a fixed relationship to the button, but can't find the right offsets.
+			// It must be possible though: this is what obsidian's on behavior is on most of the default menus.
+			//.showAtPosition({ x: resizeBtn.buttonEl.offsetLeft, y: resizeBtn.buttonEl.offsetTop })
+
+			let menuDiv = resizeBtn.buttonEl.createDiv("yolo")
+			menuDiv.createDiv("", (el) => {
+			new ButtonComponent(el)
+				.setButtonText("<+")
+				.setTooltip("expand view into past")
+			new ButtonComponent(el)
+				.setButtonText("+>")
+				.setTooltip("expand view into future")
+			})
+			menuDiv.createDiv("", (el) => {
+				new ButtonComponent(el)
+					.setButtonText("-<")
+					.setTooltip("contract view from past")
+				new ButtonComponent(el)
+					.setButtonText(">-")
+					.setTooltip("contract view from future")
+			})
+
+		})
+		new ButtonComponent(viewNavEl)
+			.setButtonText("->")
+			.setTooltip("shift view into future (small step)")
+		new ButtonComponent(viewNavEl)
+			.setButtonText("->->")
+			.setTooltip("shift view into future (large step)")
+
+
 		this._doCal();
 
 		// So about events.
