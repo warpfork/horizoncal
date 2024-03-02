@@ -102,3 +102,9 @@ You can read more about how exactly these are stored in your event data files in
 ### What if I create events without timezones?
 
 HorizonCal will add the current prevailing timezone as soon as it has any encounter at all with that event file.
+
+
+License
+-------
+
+SPDX-License-Identifier: Apache-2.0 OR MIT
