@@ -8,6 +8,21 @@ If you're still looking for more details, and don't mind seeing code and raw dat
 
 ---
 
+Hacking on an Obsidian Plugin
+-----------------------------
+
+- Mostly:
+	- clone this into `yourvault/.obsidian/plugins/horizoncal`, and run `npm run dev`.
+	- See https://docs.obsidian.md/Plugins/Getting+started/Build+a+plugin !
+	- You'll probably also want the Hot Reload psuedo-plugin mentioned in that link.
+
+And you'll be off to the races in no time.
+
+Some other misc details:
+
+- you should occasionally run `npm run build` just to make sure it still works.  (It lints even more aggressively.)
+
+
 HC's approach to Dates
 ----------------------
 
