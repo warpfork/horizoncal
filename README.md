@@ -22,7 +22,7 @@ Data Format
 
 HorizonCal uses one file per event, and Obsidian frontmatter to store almost all data.
 
-The file layout is roughly "`{hc_dir}/{YYYY}/{MM}/evt-{YYYY}-{MM}-{DD}-{evt_title}-{uid}`".
+The file layout is roughly "`{hc_dir}/{YYYY}/{MM}/{DD}/evt-{YYYY}-{MM}-{DD}-{evt_title}-{uid}`".
 
 (Files are renamed when the event date or title changes.)
 
@@ -85,21 +85,17 @@ We hope this behavior pleases :)  Timezones are definitely hard to handle well, 
 
 ### Named timezones, or +offset timezones?
 
-HorizonCal uses _both_.
+HorizonCal uses primarily named timezones.
 
-- Users (typically) specify named timezones.
-- Events store the offset form as well, for stability.
-- HorizonCal generates the offset form and updates it when events are moved.
+(In hacking details: HorizonCal internally ends up using offsets...
+but generally not directly in the user's sight; it's a detail of how some of our libraries work.)
 
-The main reason to do things this way is to interact correctly with changes like Daylight Savings Time transitions.
-This requires named timezones.  (The timezone "Europe/Berlin" transitions between "CET" and "CEST" over course of the year!)
-
-At the same time, we store offset literals, because they're clearer and more stable.
-Name timezones have one major drawback: they're more complex because they have to be _resolved_ into an offset,
-and those definitions can change over time!
-(This year, "Europe/Berlin" has those daylight savings time transitions -- will it next year?  Who knows!
-That's a human policy decision, and it may change!)
-((REVIEW: I'm not actually sure this is sanely justifiable.  Yes, the TZDB changes.  But other humans are pretty good at making sure it doesn't change retroactively.  Worst case?  Some events get mapped to different unix epoch timestamps?  _oh no_.  This is a calendar for humans, not for log event linearization -- if that happens, _it's probably right_.)
+HorizonCal does not store the offsets that named timezones are resolved to, nor any unix timestamps.
+In most cases, this is not comment worthy.  In the (relatively rare) case that the TZDB is changed,
+due to adventurous human policy changes, this may mean some future events you've scheduled change
+in which exact second they resolve to.  This is generally... fine.
+This is a calendar for humans, not for log event linearization.
+If a TZDB change happens... then accepting it _is probably right_.
 
 You can read more about how exactly these are stored in your event data files in the [HACKME document](hack/HACKME.md).
 
