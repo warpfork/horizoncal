@@ -108,7 +108,7 @@ export class HorizonCalView extends ItemView {
 				display: "none",
 			})
 			resizeBtn.onClick((evt) => {
-				menuDiv.setCssProps({display: ""})
+				menuDiv.setCssProps({ display: "" })
 			})
 
 			menuDiv.createDiv("", (el) => {
