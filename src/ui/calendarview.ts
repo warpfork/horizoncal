@@ -137,6 +137,13 @@ export class HorizonCalView extends ItemView {
 			.setTooltip("shift view into future (large step)")
 
 
+		// TODO: hm, wrap a try around this...?
+		// Not good if there's an error here, but also its VERY partial.
+		// The calendar can and will render and be usable if a single effect source throws an error,
+		// but if we don't have the registrations coming below this then it's rather poor.
+		// But those hooks also don't make sense to emplace until after initializing this.calUI, so.
+		// Or do they.  I guess there's a time quantum here where we've read things, and not put in change hooks, and in practice that's not super relevant given the user, but in theory it is indeed wrong.
+		// I'm not used to thinking about weaksauce concurrency; can I just check for null calUI in the handlers and that's actually correct and sufficient?
 		this._doCal();
 
 		// So about events.
