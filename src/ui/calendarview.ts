@@ -249,6 +249,7 @@ export class HorizonCalView extends ItemView {
 				})).open();
 			},
 			eventClick: (info: EventClickArg) => {
+				console.log(`clicked '${info.event.id}'`, info)
 				// This hook works by... fully reloading the file assumed to back the event.
 				// This works fine for HC-native events, but will be much less fine if we add other event sources.
 				let evtOrError = HCEvent.fromPath(this.app, info.event.id);
