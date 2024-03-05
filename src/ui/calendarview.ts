@@ -6,7 +6,7 @@ import {
 } from 'obsidian';
 
 import {
-	Calendar
+	Calendar, DateSelectArg, EventClickArg
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -224,26 +224,14 @@ export class HorizonCalView extends ItemView {
 				hour12: false
 			},
 
-			eventClick: (info) => {
-				// This hook works by... fully reloading the file assumed to back the event.
-				// This works fine for HC-native events, but will be much less fine if we add other event sources.
-				let evtOrError = HCEvent.fromPath(this.app, info.event.id);
-				if (evtOrError instanceof Error) {
-					alert("cannot use HC's event editors; event id did not map to a file path!");
-					return
-				}
-				let hcEvt = evtOrError;
-				new EventInteractModal(this.plugin, hcEvt).open();
-			},
-
-			// Dragging?  Spicy.
+			// Config to tweak how the interactive parts work:
 			editable: true, // Enables the drop and resize callbacks and related UI.
 			longPressDelay: 200, // Default is a full second, insanely too long.
-			eventDrop: changeHook,
-			eventResize: changeHook,
 			selectable: true, // Enables the select callback and related UI.
 			selectMinDistance: 5, // Default is 0px, very silly!
-			select: (info) => {
+
+			// Hooks for interactions:
+			select: (info: DateSelectArg) => {
 				let startDt = toLuxonDateTime(info.start, this.calUI)
 				let endDt = toLuxonDateTime(info.end, this.calUI)
 
@@ -260,6 +248,19 @@ export class HorizonCalView extends ItemView {
 					endTZ: endDt.zoneName,
 				})).open();
 			},
+			eventClick: (info: EventClickArg) => {
+				// This hook works by... fully reloading the file assumed to back the event.
+				// This works fine for HC-native events, but will be much less fine if we add other event sources.
+				let evtOrError = HCEvent.fromPath(this.app, info.event.id);
+				if (evtOrError instanceof Error) {
+					alert("cannot use HC's event editors; event id did not map to a file path!");
+					return
+				}
+				let hcEvt = evtOrError;
+				new EventInteractModal(this.plugin, hcEvt).open();
+			},
+			eventDrop: changeHook,
+			eventResize: changeHook,
 		})
 		this.calUI.addEventSource({
 			events: makeEventSourceFunc(this.plugin, this.calUI),
