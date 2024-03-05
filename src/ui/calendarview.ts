@@ -2,24 +2,26 @@ import {
 	ButtonComponent,
 	ItemView,
 	Menu,
-	TFile,
 	WorkspaceLeaf
 } from 'obsidian';
 
 import {
-	Calendar,
-	EventDropArg
+	Calendar
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin, { EventResizeDoneArg } from '@fullcalendar/interaction';
+import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
 import luxonPlugin, { toLuxonDateTime } from '@fullcalendar/luxon3';
 
-import { HCEvent, HCEventFilePath } from '../data/data';
+import { HCEvent } from '../data/data';
 import HorizonCalPlugin from '../main';
-import { makeEventSourceFunc, registerVaultChangesToCalendarUpdates } from './CalendarViewWiring';
+import {
+	makeCalendarChangeToVaultUpdateFunc,
+	makeEventSourceFunc,
+	registerVaultChangesToCalendarUpdates,
+} from './CalendarViewWiring';
 import { EventEditModal } from './EventEditModal';
 import { EventInteractModal } from './EventInteractModal';
 
@@ -163,100 +165,16 @@ export class HorizonCalView extends ItemView {
 	_doCal() {
 		if (this.calUI) this.calUI.destroy();
 
-		// This change hook function is used for both fullcal's `eventDrop` and `eventResize` callbacks.
-		// They're very similar, except the resize callback gets two different delta values in its info param.
-		// They both have old and new events, though, and those both have start and end times,
-		// and since we based all our logic on that rather than deltas, we get to reuse the function completely for both.
-		let changeHook = async (info: EventDropArg | EventResizeDoneArg) => {
-			// Step one: figure out what file we want to update for this.
-			// Or, balk immediately if we can't figure it out somehow.
-			if (!info.event.id) {
-				alert("cannot alter that event; no known data source");
-				info.revert()
-				return
-			}
-			let file = this.plugin.app.vault.getAbstractFileByPath(info.event.id)
-			if (!file || !(file instanceof TFile)) {
-				alert("event id did not map to a file path!");
-				info.revert()
-				return
-			}
-
-			// Step two: we'll use the fileManager to do an update of the frontmatter.
-			// (This handles a lot of serialization shenanigans for us very conveniently.)
-			let hcEvt: HCEvent;
-			await this.plugin.app.fileManager.processFrontMatter(file, (fileFm: any): void => {
-				// Parse the existing frontmatter, as a precursor to being ready to save it with modifications.
-				// And also because we need the timezone info.
-				// (Some of this work may be mildly excessive, but it achieves a lot of annealing of data towards convention.)
-				hcEvt = HCEvent.fromFrontmatter(fileFm)
-
-				// TODO some validity checks are appropriate here.
-				// f.eks. if timezone strings aren't valid, this is gonna go south from here.
-
-				// Shift the dates we got from fullcalendar back into the timezones this event specified.
-				//  Fullcalendar doesn't retain timezones -- it flattens everything to an offset only (because javascript Date forces that),
-				//   and it also shifts everything to the calendar-wide tz offset.  This is quite far from what we want.
-				let newStartDt = toLuxonDateTime(info.event.start as Date, this.calUI).setZone(hcEvt.evtTZ.valueStructured)
-				let newEndDt = toLuxonDateTime(info.event.end as Date, this.calUI).setZone(hcEvt.endTZ.valueStructured || hcEvt.evtTZ.valueStructured)
-
-				// Stir our updated dates into the data.
-				// This roundtrips things through strings, which... may seem unnecessary?
-				// But on the other hand, that's what we really store, and being literal is good.
-				// (Also, I was too lazy to introudce a "setParsed" system to Control; it would require an alternative simplify func, and how we're building the whole magma burrito family; no.)
-				hcEvt.evtDate.update(newStartDt.toFormat("yyyy-MM-dd"))
-				hcEvt.evtTime.update(newStartDt.toFormat("HH:mm"))
-				hcEvt.endDate.update(newEndDt.toFormat("yyyy-MM-dd"))
-				hcEvt.endTime.update(newEndDt.toFormat("HH:mm"))
-
-				// Now foist the event structure back into frontmatter form... mutating the object we started with.
-				hcEvt.foistFrontmatter(fileFm);
-
-				// Persistence?
-				// It's handled magically by processFrontMatter as soon as this callback returns:
-				//  it persists our mutations to the `fileFm` argument.
-			});
-
-			// Step three: decide if the filename is still applicable or needs to change -- and possibly change it!
-			// If we change the filename, we'll also change the event ID.
-			let path = HCEventFilePath.fromEvent(hcEvt!);
-			let wholePath = path.wholePath;
-			if (wholePath != info.event.id) {
-				console.log("moving to", wholePath)
-				try {
-					// Wrapped in a `try` because it throws on "already exists".
-					// TODO bother to react better to other errors.
-					await this.plugin.app.vault.createFolder(`${this.plugin.settings.prefixPath}/${path.dirs}`)
-				} catch { }
-				// FIXME: filename collision handling needs a better definition.
-				//  Right now, we _already updated_ the frontmatter in the file (and that's a different filesystem atomicity phase),
-				//  so we can end up with the filename not being in sync.
-				//  This is surprisingly non-catestrophic (as in, doesn't instantly destroy user data or break the UI),
-				//    as long as we still keep editing the original path...
-				//  But it's still not _good_, because it means when reopening the calendar,
-				//    the event might not get loaded if its old path was for a day that's not in view.
-				try {
-					await this.plugin.app.fileManager.renameFile(file, `${this.plugin.settings.prefixPath}/${wholePath}`)
-				} catch (error) {
-					alert("Error: could not move event file -- " + error
-						+ "\n\nThis may not cause immediate problems but may cause the event to not be loaded by functions using time windows.");
-					return
-				}
-				info.event.setProp("id", `${this.plugin.settings.prefixPath}/${wholePath}`) // FIXME canonicalization check, double slash would be bad here.
-			}
-
-			// Note that either (or indeed, both) of the above two filesystem updates
-			// may cause change detection hooks to... propagate the updated values back to FullCalendar again!
-			// _This turns out to be fine_, because it's effectively idempotent.
-		}
-
 		// The initialization order of this is a little touchy.
-		// We create the calendar object with as much configuration as we can,
-		// and then have to continue adding several more pieces of wiring and callbacks
-		//  *after* the initial calendar object creation, because they need access to it.
-		//  (Some of this is reasonable; some of it is just to ask the calendar's timezone, which is *incredibly* frustrating.)
+		// We create the calendar object with as much configuration as we can.
+		// Some callbacks have to be provided immediately and can't be later.
+		// Some callbacks have to be created later because they need access to the calendar object,
+		//  so those created and added to the calendar later.
+		//  (Some of this is reasonable; some of it is also just to ask the calendar's timezone, which is *incredibly* frustrating.)
+		// It's a fun API.
 		//
 		// We don't call the first `render()` until all these callbacks are wired.
+		let changeHook = makeCalendarChangeToVaultUpdateFunc(this.plugin);
 		this.calUI = new Calendar(this.calUIEl, {
 			plugins: [
 				// View plugins
