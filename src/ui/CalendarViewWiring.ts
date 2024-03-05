@@ -7,7 +7,7 @@ import {
 } from 'obsidian';
 
 import {
-	Calendar,
+	CalendarApi,
 	EventInput,
 	EventSourceFunc, EventSourceFuncArg,
 } from '@fullcalendar/core';
@@ -17,7 +17,7 @@ import HorizonCalPlugin from 'src/main';
 import { HCEvent } from '../data/data';
 import { loadRange } from '../data/loading';
 
-export function makeEventSourceFunc(plugin: HorizonCalPlugin, cal: Calendar): EventSourceFunc {
+export function makeEventSourceFunc(plugin: HorizonCalPlugin, cal: CalendarApi): EventSourceFunc {
 	return (info: EventSourceFuncArg): Promise<EventInput[]> => {
 		let hcEvts = loadRange(
 			plugin,
@@ -29,7 +29,7 @@ export function makeEventSourceFunc(plugin: HorizonCalPlugin, cal: Calendar): Ev
 	}
 }
 
-export function registerVaultChangesToCalendarUpdates(plugin: HorizonCalPlugin, componentLifetime: Component, cal: Calendar) {
+export function registerVaultChangesToCalendarUpdates(plugin: HorizonCalPlugin, componentLifetime: Component, cal: CalendarApi) {
 	// So about events.
 	// There are many different places you can hook.  Some more useful (and efficient) than others.
 	// For all of these, _we only do it for the lifetime of the view_.
