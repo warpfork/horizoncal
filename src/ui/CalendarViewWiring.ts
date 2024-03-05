@@ -21,6 +21,16 @@ import { HCEvent, HCEventFilePath } from '../data/data';
 import { loadRange } from '../data/loading';
 
 export function makeEventSourceFunc(plugin: HorizonCalPlugin, cal: CalendarApi): EventSourceFunc {
+	// FIXME: I'm not sure how to use this correctly, to the point of I'm not sure it's possible to do so.
+	// It appears that fullcalendar *does not dedup things with the same ID*, it creates new events regardless.
+	// This results in duplicated events if you have events first created in the current calendar and you then move the view --
+	// the events *already created* in the calendar by the change detection API with the *same ID* will remain,
+	// and the events (reasonably) returned by this hook with the *same ID* willa os getted *added* to the view.
+	//
+	// I can't think of any way to unfuck that other than to stop using the eventSource API entirely,
+	// and always add every single event.
+	// ... either that or maybe getting event source args in the direct AddEvent fixes this,
+	// but I haven't figured out what that API wants yet, because it's not actually this object either.  (:exploding_head:)
 	return (info: EventSourceFuncArg): Promise<EventInput[]> => {
 		let hcEvts = loadRange(
 			plugin,
