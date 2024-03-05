@@ -8,9 +8,7 @@ import {
 
 import {
 	Calendar,
-	EventDropArg,
-	EventInput,
-	EventSourceInput,
+	EventDropArg
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin, { EventResizeDoneArg } from '@fullcalendar/interaction';
@@ -20,9 +18,8 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import luxonPlugin, { toLuxonDateTime } from '@fullcalendar/luxon3';
 
 import { HCEvent, HCEventFilePath } from '../data/data';
-import { loadRange } from '../data/loading';
 import HorizonCalPlugin from '../main';
-import { registerVaultChangesToCalendarUpdates } from './CalendarViewWiring';
+import { makeEventSourceFunc, registerVaultChangesToCalendarUpdates } from './CalendarViewWiring';
 import { EventEditModal } from './EventEditModal';
 import { EventInteractModal } from './EventInteractModal';
 
@@ -53,23 +50,6 @@ export class HorizonCalView extends ItemView {
 	viewContentEl: Element; // Reference grabbed during onOpen.
 	calUIEl: HTMLElement; // Div created during onOpen to be fullcal's root.
 	calUI: Calendar; // Fullcal's primary control object.
-
-	eventSources: EventSourceInput[] = [
-		{
-			events: (info, successCallback, failureCallback) => {
-				let hcEvts = loadRange(
-					this.plugin,
-					toLuxonDateTime(info.start, this.calUI),
-					toLuxonDateTime(info.end, this.calUI)
-				);
-				let fcEvts = hcEvts.map((hcEvt): EventInput => hcEvt.toFCdata(this.plugin.settings))
-				successCallback(fcEvts)
-				//console.log("---- query journey ended")
-				return null
-			},
-			color: '#146792',
-		},
-	]
 
 	async onOpen() {
 		// The first element in containerEl is obsidian's own header.
@@ -270,6 +250,13 @@ export class HorizonCalView extends ItemView {
 			// _This turns out to be fine_, because it's effectively idempotent.
 		}
 
+		// The initialization order of this is a little touchy.
+		// We create the calendar object with as much configuration as we can,
+		// and then have to continue adding several more pieces of wiring and callbacks
+		//  *after* the initial calendar object creation, because they need access to it.
+		//  (Some of this is reasonable; some of it is just to ask the calendar's timezone, which is *incredibly* frustrating.)
+		//
+		// We don't call the first `render()` until all these callbacks are wired.
 		this.calUI = new Calendar(this.calUIEl, {
 			plugins: [
 				// View plugins
@@ -356,7 +343,10 @@ export class HorizonCalView extends ItemView {
 				})).open();
 			},
 		})
-		this.eventSources.map((evtSrc) => this.calUI.addEventSource(evtSrc))
+		this.calUI.addEventSource({
+			events: makeEventSourceFunc(this.plugin, this.calUI),
+			color: '#146792',
+		});
 		this.calUI.render()
 	}
 }

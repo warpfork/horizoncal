@@ -10,10 +10,26 @@ import {
 import {
 	Calendar,
 	EventInput,
+	EventSourceFunc, EventSourceFuncArg,
 } from '@fullcalendar/core';
+import { toLuxonDateTime } from '@fullcalendar/luxon3';
 
+import HorizonCalPlugin from 'src/main';
 import { HCEvent } from '../data/data';
+import { loadRange } from '../data/loading';
 import { HorizonCalSettings } from '../settings/settings';
+
+export function makeEventSourceFunc(plugin: HorizonCalPlugin, cal: Calendar): EventSourceFunc {
+	return (info: EventSourceFuncArg): Promise<EventInput[]> => {
+		let hcEvts = loadRange(
+			plugin,
+			toLuxonDateTime(info.start, cal),
+			toLuxonDateTime(info.end, cal)
+		);
+		let fcEvts = hcEvts.map((hcEvt): EventInput => hcEvt.toFCdata(plugin.settings))
+		return Promise.resolve(fcEvts)
+	}
+}
 
 export function registerVaultChangesToCalendarUpdates(pluginSettings: HorizonCalSettings, app: App, componentLifetime: Component, cal: Calendar) {
 	// So about events.
