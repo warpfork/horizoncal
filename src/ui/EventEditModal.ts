@@ -1,4 +1,5 @@
 import {
+	KeymapContext,
 	Modal,
 	Setting,
 	TFile,
@@ -38,6 +39,11 @@ export class EventEditModal extends Modal {
 		} else {
 			contentEl.createEl("h1", { text: "New event" });
 		}
+
+		// Alt-o means "okay".
+		this.scope.register(['Alt'], 'o',  (evt: KeyboardEvent, ctx: KeymapContext) => {
+			this._onSubmit();
+		})
 
 		let widgeteer = <TStructured>(params: {
 			// Consider it constrained that "TStructured as DateTime, when type=='date'".
@@ -276,6 +282,12 @@ export class CategorySelectModal extends Modal {
 		options = options.unique();
 
 		// Someday todo: i'd probably like to have the arrow keys, and pgup/pgdown, move the nav focus too.
+
+		// Alt-o means "okay".
+		this.scope.register(['Alt'], 'o',  (evt: KeyboardEvent, ctx: KeymapContext) => {
+			// No additional persistence efforts required in this one.  It's accumulating in-memory mutations.
+			this.close();
+		})
 
 		this.contentEl.createEl("ul", {}, (el) => {
 			options.forEach((row) => {
