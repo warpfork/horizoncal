@@ -136,6 +136,7 @@ export class HorizonCalView extends ItemView {
 				.setTitle("BONK FULLCAL 👈")
 				.setIcon("document")
 				.onClick(async () => {
+					await this.plugin.loadSettings();
 					this._doCal();
 				});
 		});
