@@ -1,10 +1,9 @@
 
 import {
-	App,
 	CachedMetadata,
 	Component,
 	TAbstractFile,
-	TFile,
+	TFile
 } from 'obsidian';
 
 import {
@@ -17,7 +16,6 @@ import { toLuxonDateTime } from '@fullcalendar/luxon3';
 import HorizonCalPlugin from 'src/main';
 import { HCEvent } from '../data/data';
 import { loadRange } from '../data/loading';
-import { HorizonCalSettings } from '../settings/settings';
 
 export function makeEventSourceFunc(plugin: HorizonCalPlugin, cal: Calendar): EventSourceFunc {
 	return (info: EventSourceFuncArg): Promise<EventInput[]> => {
@@ -31,7 +29,7 @@ export function makeEventSourceFunc(plugin: HorizonCalPlugin, cal: Calendar): Ev
 	}
 }
 
-export function registerVaultChangesToCalendarUpdates(pluginSettings: HorizonCalSettings, app: App, componentLifetime: Component, cal: Calendar) {
+export function registerVaultChangesToCalendarUpdates(plugin: HorizonCalPlugin, componentLifetime: Component, cal: Calendar) {
 	// So about events.
 	// There are many different places you can hook.  Some more useful (and efficient) than others.
 	// For all of these, _we only do it for the lifetime of the view_.
@@ -51,7 +49,7 @@ export function registerVaultChangesToCalendarUpdates(pluginSettings: HorizonCal
 	//
 	// Note for changes and renames alike, the handlers can be considerably redundant if the change came *from* the UI.
 	// But that's rather hard for us to tell, and idempotency means it makes little difference, so!
-	componentLifetime.registerEvent(app.vault.on(
+	componentLifetime.registerEvent(plugin.app.vault.on(
 		"rename",
 		(file: TAbstractFile, oldPath: string) => {
 			console.log("rename event!")
@@ -61,7 +59,7 @@ export function registerVaultChangesToCalendarUpdates(pluginSettings: HorizonCal
 			}
 		}
 	));
-	componentLifetime.registerEvent(app.metadataCache.on(
+	componentLifetime.registerEvent(plugin.app.metadataCache.on(
 		"changed",
 		(file: TFile, data: string, cache: CachedMetadata) => {
 			console.log("metadata change!", file, cache);
@@ -81,7 +79,7 @@ export function registerVaultChangesToCalendarUpdates(pluginSettings: HorizonCal
 			let fcEvt = cal.getEventById(file.path);
 			if (fcEvt == null) {
 				// New event!
-				cal.addEvent(hcEvt.toFCdata(pluginSettings))
+				cal.addEvent(hcEvt.toFCdata(plugin.settings))
 				// FIXME it gets a different default background because not event source; silly.
 				//  It seems we can give an EventSourceImpl handle as another param; worth?  Hm.  Probably.
 			} else {
@@ -92,7 +90,7 @@ export function registerVaultChangesToCalendarUpdates(pluginSettings: HorizonCal
 				// Could we just nuke and replace the event?
 				// Maybe, but in some cases that might fuck with the UI;
 				// for example, on mobile, you have to hold-select something to make it adjustable.
-				let newData: EventInput = hcEvt.toFCdata(pluginSettings);
+				let newData: EventInput = hcEvt.toFCdata(plugin.settings);
 				for (let prop in newData) {
 					if (prop == "id") continue; // Already sure of that thanks.
 					if (prop == "start") { fcEvt.setStart(newData[prop]!); continue }
@@ -105,7 +103,7 @@ export function registerVaultChangesToCalendarUpdates(pluginSettings: HorizonCal
 			// If the action is a user edit to the frontmatter... yeah, it's possible the file path should get resynced to it.
 		}
 	));
-	componentLifetime.registerEvent(app.metadataCache.on(
+	componentLifetime.registerEvent(plugin.app.metadataCache.on(
 		"deleted",
 		(file: TFile, prevCache: CachedMetadata | null) => {
 			console.log("delete event!")

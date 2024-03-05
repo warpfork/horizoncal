@@ -125,7 +125,7 @@ export class HorizonCalView extends ItemView {
 		// I'm not used to thinking about weaksauce concurrency; can I just check for null calUI in the handlers and that's actually correct and sufficient?
 		this._doCal();
 
-		registerVaultChangesToCalendarUpdates(this.plugin.settings, this.app, this, this.calUI);
+		registerVaultChangesToCalendarUpdates(this.plugin, this, this.calUI);
 	}
 
 	async onPaneMenu(menu: Menu) {
