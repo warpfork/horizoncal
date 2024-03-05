@@ -186,7 +186,7 @@ export class HorizonCalView extends ItemView {
 			headerToolbar: {
 				right: 'prev,next today',
 				// future work: additional nav buttons of our own that manage via 'gotoDate' and 'visibleRange'.
-				center: 'dayGridMonth,timeGridWeek,timeGridFourDay,timeGrid14Day,listWeek',
+				center: 'dayGridMonth,timeGridWeek,listWeek timeGridFourDay,timeGrid14Day',
 				left: '',
 			},
 			views: {
