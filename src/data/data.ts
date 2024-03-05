@@ -66,6 +66,7 @@ export class HCEvent {
 		let evtFmRaw = metadata!.frontmatter!; // I have seen this fail once.  When obsidian is freshly launched.  And the HC View was already open on launch.
 		// ^ it's megabad if this borks?  I don't understand why but it causes all future edits to not cause visual updates until you close and reopen the view?
 		//     the error boils up on fetchSourcesByIdes in fullcal and three "anonymous" methods above that, so I can't tell what this is really about.   OH...  register order?
+		// Do we get change events happens-after this when metadata _does_ get loaded, so I can just quietly ignore this particular kind of error?
 		let hcEvt = this.fromFrontmatter(evtFmRaw);
 		hcEvt.loadedFrom = file.path;
 		return hcEvt;
