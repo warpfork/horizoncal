@@ -84,11 +84,34 @@ export function registerVaultChangesToCalendarUpdates(plugin: HorizonCalPlugin, 
 				return
 			}
 
+			// Quickcheck: is this within the path we're configured to care about?
+			// If not, quit looking immediately.
+			if (!file.path.startsWith(plugin.settings.prefixPath)) {
+				return
+			}
+
+			// Does this look like it should be an event, from filename pattern?
+			// (Getting a tad loosey-goosey here -- we'll look only at the filename, not the dir path here.
+			// This is so if someone creates files anywhere in the area, we'll be able to help get them into the right place.)
+			if (!file.name.startsWith("evt-")) {
+				return
+			}
+
+			// Load the event.  Or try to.
+			// Does it look alright?
+			// FUTURE: we should probably have a writeback of an "hcError" field, if not.
+			let hcEvt = HCEvent.fromFrontmatter(cache.frontmatter);
+			hcEvt.loadedFrom = file.path;
+			let errs = hcEvt.validate();
+			if (errs) {
+				console.log(`file '${file.path}' didn't validate as an HCEvent:`, errs)
+				return
+			}
+
 			// For events already in the calendar: we update them.
 			// If not: we add it one.
 			// (TODO: should filter for the relevance of date.)
-			let hcEvt = HCEvent.fromFrontmatter(cache.frontmatter);
-			hcEvt.loadedFrom = file.path;
+			// ((Possible we should have this hook at plugin scope rather than view scope, considering it might want to do other fixes anyway.))
 			let fcEvt = cal.getEventById(file.path);
 			if (fcEvt == null) {
 				// New event!
