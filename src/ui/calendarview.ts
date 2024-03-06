@@ -125,9 +125,11 @@ export class HorizonCalView extends ItemView {
 		// But those hooks also don't make sense to emplace until after initializing this.calUI, so.
 		// Or do they.  I guess there's a time quantum here where we've read things, and not put in change hooks, and in practice that's not super relevant given the user, but in theory it is indeed wrong.
 		// I'm not used to thinking about weaksauce concurrency; can I just check for null calUI in the handlers and that's actually correct and sufficient?
-		this._doCal();
+		this._createCal();
 
 		registerVaultChangesToCalendarUpdates(this.plugin, this, this.calUI);
+
+		this.calUI.render()
 	}
 
 	async onPaneMenu(menu: Menu) {
@@ -137,7 +139,8 @@ export class HorizonCalView extends ItemView {
 				.setIcon("document")
 				.onClick(async () => {
 					await this.plugin.loadSettings();
-					this._doCal();
+					this._createCal();
+					this.calUI.render()
 				});
 		});
 		menu.addSeparator();
@@ -163,7 +166,7 @@ export class HorizonCalView extends ItemView {
 		if (this.calUI) this.calUI.destroy()
 	}
 
-	_doCal() {
+	_createCal() {
 		if (this.calUI) this.calUI.destroy();
 
 		// The initialization order of this is a little touchy.
@@ -268,7 +271,6 @@ export class HorizonCalView extends ItemView {
 			events: makeEventSourceFunc(this.plugin, this.calUI),
 			color: '#146792',
 		});
-		this.calUI.render()
 	}
 }
 
