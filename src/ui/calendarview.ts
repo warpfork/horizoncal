@@ -243,7 +243,6 @@ export class HorizonCalView extends ItemView {
 				// The modal will handle further editing, and can persist a new file.
 				new EventEditModal(this.plugin, HCEvent.fromFrontmatter({
 					title: "untitled",
-					evtType: "default",
 					evtDate: startDt.toFormat("yyyy-MM-dd"),
 					evtTime: startDt.toFormat("HH:mm"),
 					evtTZ: startDt.zoneName,

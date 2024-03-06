@@ -100,16 +100,6 @@ export class EventEditModal extends Modal {
 			type: "text",
 		});
 
-		widgeteer({
-			// Leaving evtType as freetext for now, but
-			// want to introduce a more complex feature here,
-			// probably with a sub-modal.
-			// May also turn into a set that's persisted as comma-sep strings.
-			prop: this.data.evtType,
-			name: "Event Type",
-			type: "text",
-		});
-
 		new Setting(contentEl)
 			.setName("categories!")
 			.addButton((btn) => {
