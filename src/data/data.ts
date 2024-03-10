@@ -71,18 +71,16 @@ export class HCEvent {
 		return hcEvt;
 	}
 
-	// There are still a few higher level validity rules not covered.
+	// Validate returns an error if any fields are invalid.
+	// If only one field is invalid, it's that error; if multiple are invalid,
+	// an error composing a short note for each invalid field is returned.
 	//
+	// Note that there are still a few higher level validity rules not covered.
 	// For example, endTZ without an endTime is kinda silly.
 	// However, that exaple also isn't really worth checking because it's never something that deserves user action;
 	// whether we elide that from serialization at the end is a choice local to serializing.
-	//
-	// The basic types of fields we didn't apply Control wrappers to is also currently unchecked.
-	// This could create some funny JS errors, but the UI guides you pretty hard away from it so I just haven't bothered yet.
-	// TODO: this is probably gonna need to change immediately, since we started using Control for mutation attachment too.
-	//
-	// There's also the small matter cross-field checks like "is the end actually after the beginning?".
-	// Those aren't handled yet either.
+	// There's also the small matter cross-field checks like "is the end actually after the beginning?" --
+	// those aren't currently validated either.
 	validate(): Error | undefined {
 		let errors: Error[] = [];
 		this.allControls().forEach((control) => control.foldErrors(errors))
