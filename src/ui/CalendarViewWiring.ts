@@ -187,8 +187,15 @@ export function makeCalendarChangeToVaultUpdateFunc(plugin: HorizonCalPlugin): C
 			// (Some of this work may be mildly excessive, but it achieves a lot of annealing of data towards convention.)
 			hcEvt = HCEvent.fromFrontmatter(fileFm)
 
-			// TODO some validity checks are appropriate here.
+			// Do some basic validity checks.
 			// f.eks. if timezone strings aren't valid, this is gonna go south from here.
+			// We also call revert on the calendar's event if things are invalid.
+			let validityErr = hcEvt.validate()
+			if (validityErr) {
+				info.revert()
+				alert("event change invalid:\n"+validityErr)
+				return
+			}
 
 			// Shift the dates we got from fullcalendar back into the timezones this event specified.
 			//  Fullcalendar doesn't retain timezones -- it flattens everything to an offset only (because javascript Date forces that),
