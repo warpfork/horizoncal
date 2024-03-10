@@ -209,8 +209,9 @@ export class EventEditModal extends Modal {
 		} else {
 			let path = HCEventFilePath.fromEvent(this.data);
 			try {
-				// Wrapped in a `try` because it throws on "already exists".
-				// TODO bother to react better to other errors.
+				// Wrapped in a `try` because it throws on "already exists", which is not a real problem.
+				// Might be worth inspecting the error and reacting better if it's something else,
+				// but the file creation attempt up next should return a meaningful error in most cases anyway.
 				await this.plugin.app.vault.createFolder(`${this.plugin.settings.prefixPath}/${path.dirs}`)
 			} catch { }
 			// FIXME: file-already-exists should be handled in a less awful way.

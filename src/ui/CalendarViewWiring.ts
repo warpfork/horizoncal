@@ -220,8 +220,9 @@ export function makeCalendarChangeToVaultUpdateFunc(plugin: HorizonCalPlugin): C
 		if (wholePath != info.event.id) {
 			console.log("moving to", wholePath)
 			try {
-				// Wrapped in a `try` because it throws on "already exists".
-				// TODO bother to react better to other errors.
+				// Wrapped in a `try` because it throws on "already exists", which is not a real problem.
+				// Might be worth inspecting the error and reacting better if it's something else,
+				// but the file creation attempt up next should return a meaningful error in most cases anyway.
 				await plugin.app.vault.createFolder(`${plugin.settings.prefixPath}/${path.dirs}`)
 			} catch { }
 			// FIXME: filename collision handling needs a better definition.
