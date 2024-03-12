@@ -29,6 +29,7 @@ Core features are working:
 
 - Create events by selecting time blocks in the GUI.
 - Edit events with Horizoncal's modal forms (which do validation) or by editing the files raw.
+- Dragging and dropping events in the UI automatically edits files, and changes in files immediately update the UI.
 - Synchronizing everything with the usual plain-files sync tools absolutely works!
 - Events can be assigned to categories; this updates their colors, etc.
 
@@ -39,7 +40,8 @@ A few more advanced features are still in-progress:
 
 **Installing and using this plugin currently requires building from source.**
 You can find some pointers in the [HACKME](hack/HACKME.md) file.
-We'll aim to publish to the Obsidian community plugins store in the future.
+We'll aim to publish to the Obsidian community plugins store in the future...
+but for now, this is for people who aren't afraid of compilers :)
 
 
 Data Format
@@ -65,7 +67,7 @@ HorizonCal made specific choices about both the filesystem layout, and the prope
 There's a couple of reasons that drove the choices we made:
 
 - HorizonCal is meant to be editable by drag-and-drop!  This weighed heavily in favor of a file-per-event approach, because our intent to be able to edit the data a _lot_, programmatically, means it might as well be in a machine-friendly format (and especially, not embedded in the middle of your other human-written freetext, which would be harder to preserve cleanly... especially if we move events between whole days).
-- HorizonCal cares about being _Fast_, even with large numbers of events over large spans of time.  This also weighted heavily in favor of a file-er-event approach, because being fast means means we need to lay things out in a way that's easy for us to index over.  (For example, we use certain filename conventions to quickly mark files with data that needs to be read across large timespans (like your timezone shift events!  A thing we support, by the way!) so they can be found quickly without parsing every other event in your repo to discover them.)  A file-per-event also means we're not stuck parsing through the rest of your daily notes file contents while looking for the subset of data that's relevant to us.
+- HorizonCal cares about being _Fast_, even with large numbers of events over large spans of time.  This also weighted heavily in favor of a file-per-event approach, because being fast means means we need to lay things out in a way that's easy for us to index over.  (For example, we use certain filename conventions to quickly mark files with data that needs to be read across large timespans (like your timezone shift events!  A thing we support, by the way!) so they can be found quickly without parsing every other event in your repo to discover them.)  A file-per-event also means we're not stuck parsing through the rest of your daily notes file contents while looking for the subset of data that's relevant to us.
 - HorizonCal cares about working with large numbers of events.  This means we insist on using directories to organize years and months.  (You don't want to end up with a directory with 20,000 entries in it that lags the UI if you accidentally open it in a folder nav tree, do you?)
 - Consistency is good for everyone!  It would be delightful if all HorizonCal users can also share their own dataview query snippets, and having a basic agreement on the file layout conventions makes them work reliably (and efficiently) for everyone, without the need to tweak.
 - HorizonCal keeps dates, times in the day, and timezone data each in their own fields in each file.  We chose this approach based on a study of how Obsdian's native properties editor interacts with these fields.  We want the approach that derives the most value from Obsidian's built-in property editor, while also being the least likely to experience accidental data loss where Obsidian's property editor rounds some corners.  (Timezones, especially, do not survive in Obsidian's "Date & Time" property, and so forced separate fields.)  This does result in quite a few properties, but stability and clarity is worth it.
