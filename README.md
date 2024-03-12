@@ -17,6 +17,31 @@ Features include:
 - rich support for timezones!  Create special events to tell the calendar when your personal timezone is changing, so the calendar can automatically adapt views and new event creation to seamlessly project events in to _your contextually relevant time_ for _you_ -- even when you look forward or backward over timezone changes.  (Yeah, I travel a lot.  How could you tell? :))
 
 
+Status
+------
+
+HorizonCal is under active development, but usable.
+
+Your humble primary author is at a dogfooding level of usage and considers this a daily-driver.
+The level of polish for others may be a bit rough :)
+
+Core features are working:
+
+- Create events by selecting time blocks in the GUI.
+- Edit events with Horizoncal's modal forms (which do validation) or by editing the files raw.
+- Synchronizing everything with the usual plain-files sync tools absolutely works!
+- Events can be assigned to categories; this updates their colors, etc.
+
+A few more advanced features are still in-progress:
+
+- Categories can be user-defined... but the settings dialog for this is not yet implemented; you'd have to edit `data.json` manually.
+- "tzch" events are planned, but not yet implemented :)  (Timezones *are* otherwise already robustly well-supported, though.)
+
+**Installing and using this plugin currently requires building from source.**
+You can find some pointers in the [HACKME](hack/HACKME.md) file.
+We'll aim to publish to the Obsidian community plugins store in the future.
+
+
 Data Format
 -----------
 
