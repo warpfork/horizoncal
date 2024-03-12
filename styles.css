@@ -47,6 +47,8 @@ the same as the underlying library; ugh), then their styles affect us.
 	/* .fc-v-event {
 		border: 3px solid var(--fc-event-border-color);
 	} */
+
+	--background-modifier-border-focus: rgb(143, 223, 130);
 }
 
 /* add a little spacing such that even if you have a background event across all time,
@@ -92,6 +94,11 @@ the same as the underlying library; ugh), then their styles affect us.
 	padding: 1em 1em;
 }
 
+.horizoncal .checkbox-container::before {
+	/* Drop transition animation.  The default easing affects the outline property
+	 and makes keyboard focus shifts appear to lag and as if focus is in two places at once. */
+	transition: none;
+}
 
 
 
