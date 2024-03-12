@@ -210,3 +210,26 @@ TODO this might be rough.  I'd like to patch frontmatter, change the path, and h
 
 In case of ambiguity, the order of operations is: patch frontmatter first; then move files.
 This means it's always correct to update file paths if there's a desync.
+
+
+----
+
+What are some of the joys of doing this as an Obsidian plugin?
+----------------------
+
+There are many :)
+
+From a user perspective:
+
+- We get Obsidian's excellent markdown editor so users can make extended notes with rich formatting.
+- Events and their notes can be crosslinked to other notes.  Point at files in your knowledge base you worked on during that event, or have notes that refer to events that generated them, or both.  Use tagging that crosses your knowledge base and events.  Whatever organizational pattern you want to produce, you can do it!
+- We get Obsidian's wonderful community of other folks who are united around valuing software that works with plain files and private synchronization!
+
+And from an engineering perspective:
+
+- Obsidian has nice APIs for rapidly reacting to filesystem changes...
+  - including supplying a universal cache for parsed frontmatter, which all obsidian plugins can share without any significant coordination problems.  (This is a huge win if one wants to have easy, efficient interop with other systems. E.g. if one wants to process HorizonCal event data with Dataview or other plugins, we calmly magically get to share a cache.  Excellent.)
+  - and these change APIs can often be faster to broadcast events than a filesystem poll would be, since Obsidian defacto linearizes changes made by any editors or other plugins.  (For example, using the frontmatter properties editor and pressing "enter" on a field broadcasts a change event _immediately_, rather than with whatever latency a filesystem poller would have.)
+  - rename APIs can do automatic link updating!  Internally to HorizonCal alone, this isn't very impactful, but it shows up bigtime if a user crosslinks events and other notes: then, if we rename an event file because its date or title has changed, Obsidian automatically updates all links to that event, anywhere in the vault!  Even in files that HorizonCal wouldn't otherwise understand.  Delightful.
+- Obsidian ships to desktop and mobile, and as a plugin, we get all that infrastructure "for free".
+- All of the other nice things that Obsidian provides a baseline and community schelling point for: for example, themes.  HorizonCal takes hints from Obsidian's well-documented theme variables for colors, fonts, etc.
