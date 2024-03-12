@@ -267,9 +267,11 @@ export class HorizonCalView extends ItemView {
 			eventResize: changeHook,
 		})
 		this.calUI.addEventSource({
+			id: 'horizoncal', // providing an ID makes it easy to add new events later and attach them to this source (which turns out to be essential for ID-based dedup).
 			events: makeEventSourceFunc(this.plugin, this.calUI),
 			color: '#146792',
 		});
+		// this.evtsrc = this.calUI.getEventSourceById('horizoncal')! // unnecessary, because the addEvent api supports use of name.
 	}
 }
 
