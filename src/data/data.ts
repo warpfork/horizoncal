@@ -156,6 +156,10 @@ export class HCEvent {
 		cats.forEach((cat) => {
 			Object.assign(applicableProps, settings.categories[cat])
 		})
+		let extraClasses: string[] = [];
+		if (applicableProps["opacity"]) {
+			extraClasses.push("hcevt-oppa50")
+		}
 
 		return {
 			id: this.loadedFrom,
@@ -166,6 +170,10 @@ export class HCEvent {
 			start: this.getCompleteStartDt().toISO() as string,
 			end: this.getCompleteEndDt().toISO() as string,
 			color: applicableProps.color,
+			// backgroundColor:
+			// borderColor:
+			// textColor:
+			classNames: extraClasses,
 		}
 	}
 

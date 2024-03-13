@@ -63,6 +63,9 @@ the same as the underlying library; ugh), then their styles affect us.
 	margin: 0 4px;
 }
 
+.horizoncal .hcevt-oppa50 {
+	opacity: 50%;
+}
 
 
 /*=====================================*/
