@@ -6,7 +6,7 @@ import {
 } from 'obsidian';
 
 import {
-	Calendar, DateSelectArg, EventClickArg
+	Calendar, DateRangeInput, DateSelectArg, EventClickArg
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -80,6 +80,7 @@ export class HorizonCalView extends ItemView {
 			el.setCssProps({
 				display: "inline-block",
 				position: "relative",
+				"z-index": "1",
 			})
 			menuDiv.setCssProps({
 				position: "absolute",
@@ -96,9 +97,25 @@ export class HorizonCalView extends ItemView {
 				new ButtonComponent(el)
 					.setButtonText("<+")
 					.setTooltip("expand view into past")
+					.onClick(() => {
+						let newRange: DateRangeInput = {
+							start: toLuxonDateTime(this.calUI.view.currentStart, this.calUI).minus({ day: 1 }).toISODate()!,
+							end: this.calUI.view.currentEnd,
+						}
+						// console.log("bonked the button", this.calUI.view, newRange)
+						this.calUI.changeView('timeGrid', newRange)
+					})
 				new ButtonComponent(el)
 					.setButtonText("+>")
 					.setTooltip("expand view into future")
+					.onClick(() => {
+						let newRange: DateRangeInput = {
+							start: this.calUI.view.currentStart,
+							end: toLuxonDateTime(this.calUI.view.currentEnd, this.calUI).plus({ day: 1 }).toISODate()!,
+						}
+						// console.log("bonked the button", this.calUI.view, newRange)
+						this.calUI.changeView('timeGrid', newRange)
+					})
 			})
 			menuDiv.createDiv("", (el) => {
 				new ButtonComponent(el)
