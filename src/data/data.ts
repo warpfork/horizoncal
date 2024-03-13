@@ -177,6 +177,9 @@ export class HCEvent {
 				extraClasses.push("hcevt-opa10")
 			}
 		}
+		if (applicableProps["strikethrough"]) {
+			extraClasses.push("hcevt-strikethrough")
+		}
 
 		return {
 			id: this.loadedFrom,

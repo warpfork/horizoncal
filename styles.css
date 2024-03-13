@@ -88,6 +88,9 @@ the same as the underlying library; ugh), then their styles affect us.
 .horizoncal .fc-event.hcevt-opa80 {
 	opacity: 80%
 }
+.horizoncal .fc-event.hcevt-strikethrough {
+	text-decoration: strikethrough;
+}
 
 
 /*=====================================*/

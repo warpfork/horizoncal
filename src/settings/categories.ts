@@ -35,6 +35,15 @@ export type EventCategoryProperties = {
 	// A higher number gets higher precedence.
 	effectPriority?: number;
 
+	// A strikethrough style can be applied to the event's text.
+	// This may be useful for an event category that means cancelled, for example.
+	//
+	// (Protip: you can create just one "cancelled" cateogory, rather than,
+	// for example, "travel-cancelled" and "meeting-cancelled" and so on --
+	// categories stack, so having something "travel" and "cancelled" will
+	// result in an event with travel's colors and cancelled's strikethrough!)
+	strikethrough?: boolean;
+
 	// Will we support support arbitrary CSS strings, in addition to the above?  No, I don't think so.
 	// But we can add classes that are munges of your category name, so you can use additional stylesheets
 	//  if you're really certain you want to be so bold.
