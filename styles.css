@@ -63,8 +63,30 @@ the same as the underlying library; ugh), then their styles affect us.
 	margin: 0 4px;
 }
 
-.horizoncal .hcevt-oppa50 {
-	opacity: 50%;
+/* A quick series of special classes we use for getting our more advanced category options to work.  */
+.horizoncal .fc-event.hcevt-opa10 {
+	opacity: 10%
+}
+.horizoncal .fc-event.hcevt-opa20 {
+	opacity: 20%
+}
+.horizoncal .fc-event.hcevt-opa30 {
+	opacity: 30%
+}
+.horizoncal .fc-event.hcevt-opa40 {
+	opacity: 40%
+}
+.horizoncal .fc-event.hcevt-opa50 {
+	opacity: 50%
+}
+.horizoncal .fc-event.hcevt-opa60 {
+	opacity: 60%
+}
+.horizoncal .fc-event.hcevt-opa70 {
+	opacity: 70%
+}
+.horizoncal .fc-event.hcevt-opa80 {
+	opacity: 80%
 }
 
 

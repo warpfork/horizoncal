@@ -158,7 +158,24 @@ export class HCEvent {
 		})
 		let extraClasses: string[] = [];
 		if (applicableProps["opacity"]) {
-			extraClasses.push("hcevt-oppa50")
+			// Ah, the glorious rounding problem.
+			if (applicableProps["opacity"] >= 80) {
+				extraClasses.push("hcevt-opa80")
+			} else if (applicableProps["opacity"] >= 70) {
+				extraClasses.push("hcevt-opa70")
+			} else if (applicableProps["opacity"] >= 60) {
+				extraClasses.push("hcevt-opa60")
+			} else if (applicableProps["opacity"] >= 50) {
+				extraClasses.push("hcevt-opa50")
+			} else if (applicableProps["opacity"] >= 40) {
+				extraClasses.push("hcevt-opa40")
+			} else if (applicableProps["opacity"] >= 30) {
+				extraClasses.push("hcevt-opa30")
+			} else if (applicableProps["opacity"] >= 20) {
+				extraClasses.push("hcevt-opa20")
+			} else {
+				extraClasses.push("hcevt-opa10")
+			}
 		}
 
 		return {

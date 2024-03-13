@@ -20,7 +20,11 @@ export type EventCategoryProperties = {
 	// Generally becomes the event background (although this may depend on other view settings).
 	color?: HexString;
 
-	// Opacity can be used to mark tentative events.
+	// Opacity can be used to mark tentative events, or cancelled events
+	// (or whatever else you prefer to configure).
+	//
+	// The number should be as a percentage, and is only available in steps of 10.
+	// (Setting opacity to "2" will result in 10%; "45" will result in 40%; "400" will cut off at 80%.)
 	opacity?: number;
 
 	// An effect priority can be set to disambiguate which category gets its styling applied when an event has several.
@@ -34,6 +38,7 @@ export type EventCategoryProperties = {
 	// Will we support support arbitrary CSS strings, in addition to the above?  No, I don't think so.
 	// But we can add classes that are munges of your category name, so you can use additional stylesheets
 	//  if you're really certain you want to be so bold.
+	// ... Oh, yeah, definitely. Turns out fullcal doesn't give us an option to do style strings.  Just classes.
 }
 
 // This is a modal (rather than a settings tab) because we let you trigger it from the category selector, too.
