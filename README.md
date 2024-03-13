@@ -131,6 +131,28 @@ You can read more about how exactly these are stored in your event data files in
 HorizonCal will add the current prevailing timezone as soon as it has any encounter at all with that event file.
 
 
+Integrating with other Calendars
+--------------------------------
+
+The primary goals of HorizonCal are to be a good calendar that is _local first_,
+so our support for other cloud-based calendars will always be second class.
+
+At the moment, there's not much support for other calendars.
+
+If you're interested in hacking on this, PRs may be accepted,
+and you might find it interesting to know the fullcalendar library already has some useful support:
+
+- reading ical is easily supported: https://fullcalendar.io/docs/icalendar
+- google calendar also has specific support: https://fullcalendar.io/docs/google-calendar
+
+It's possible that these features will be easy to add!
+However, the primary author of this plugin doesn't need any of them,
+and has no calendars of thoes types to test on,
+so... this is "PRs welcome" :)
+
+Maybe the person to add these features can be you!
+
+
 License
 -------
 
