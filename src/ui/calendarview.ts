@@ -144,8 +144,6 @@ export class HorizonCalView extends ItemView {
 		// I'm not used to thinking about weaksauce concurrency; can I just check for null calUI in the handlers and that's actually correct and sufficient?
 		this._createCal();
 
-		registerVaultChangesToCalendarUpdates(this.plugin, this, this.calUI);
-
 		this.calUI.render()
 	}
 
@@ -289,6 +287,12 @@ export class HorizonCalView extends ItemView {
 			color: '#146792',
 		});
 		// this.evtsrc = this.calUI.getEventSourceById('horizoncal')! // unnecessary, because the addEvent api supports use of name.
+
+		// Register vault change hooks.
+		// If we're calling this function again for a few that's already initialized, due to the "BONK FULLCAL" button...
+		//  be aware that we leaked the old listeners.  I don't see an easy way to avoid that,
+		//   and the hope is that we nearly never need to press that debug button, so, I'm ignoring this problem.  It's harmless in practice.
+		registerVaultChangesToCalendarUpdates(this.plugin, this, this.calUI);
 	}
 }
 
