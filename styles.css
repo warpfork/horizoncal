@@ -89,7 +89,10 @@ the same as the underlying library; ugh), then their styles affect us.
 	opacity: 80%
 }
 .horizoncal .fc-event.hcevt-strikethrough {
-	text-decoration: strikethrough;
+	text-decoration: line-through;
+	 /* The strikethrough color needs a special assignment because otherwise defaults to the color for links. */
+	 /* I have no idea how we'll get this to adapt to event text color settings, if we used them. */
+	text-decoration-color: var(--fc-event-text-color);
 }
 
 
