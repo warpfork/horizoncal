@@ -194,6 +194,8 @@ export class HCEvent {
 			// borderColor:
 			// textColor:
 			classNames: extraClasses,
+			// REVIEW: are you sure fullcal doesn't have a boolean property for cancelled, itself? // Indeed, verily, it does not.
+			//   I wonder if we should make that a first-class property that's known to us -- 'evtCancelled: boolean' in frontmatter -- but the only reason i can think to do that is for a community schelling point.  and I can't think of any reason a well-discussed convention of "cancelled" as a category name can't do just about the same.  // hotkeys, maybe?
 		}
 	}
 
