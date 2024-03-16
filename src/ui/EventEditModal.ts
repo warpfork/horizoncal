@@ -9,6 +9,7 @@ import {
 import { HCEvent, HCEventFilePath } from "../data/data";
 import { Control } from "../data/datacontrol";
 import HorizonCalPlugin from "../main";
+import { openEventInEditor } from './openEditor';
 
 //
 // If the given HCEvent has its `loadedFrom` property set,
@@ -150,6 +151,16 @@ export class EventEditModal extends Modal {
 
 		new Setting(contentEl)
 			.addButton(btn => {
+				btn.setIcon("clipboard");
+				btn.setTooltip("Save and Edit");
+				btn.setClass("save");
+				btn.onClick(async () => {
+					await this._onSubmit();
+					await openEventInEditor(this.plugin, this.data);
+				});
+				return btn;
+			})
+			.addButton(btn => {
 				btn.setIcon("checkmark");
 				btn.setTooltip("Save");
 				btn.setClass("save");
@@ -223,6 +234,7 @@ export class EventEditModal extends Modal {
 					+ "\n\nPick a title for the event that's unique in its day!");
 				return
 			}
+			this.data.loadedFrom = file.path;
 		}
 
 		await this.app.fileManager.processFrontMatter(file, (fileFm: any): void => {
