@@ -156,7 +156,10 @@ export class EventEditModal extends Modal {
 				btn.setClass("save");
 				btn.onClick(async () => {
 					await this._onSubmit();
-					await openEventInEditor(this.plugin, this.data);
+					let unlikelyError = await openEventInEditor(this.plugin, this.data);
+					if (unlikelyError) {
+						alert(unlikelyError.message);
+					}
 				});
 				return btn;
 			})

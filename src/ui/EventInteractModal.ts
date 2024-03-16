@@ -50,7 +50,10 @@ export class EventInteractModal extends Modal {
 		contentEl.createDiv({ cls: "control-wide" }, (el) => {
 			new ButtonComponent(el).setButtonText("open in markdown editor")
 				.onClick(async (evt) => {
-					openEventInEditor(this.plugin, this.data);
+					let unlikelyError = await openEventInEditor(this.plugin, this.data);
+					if (unlikelyError) {
+						alert(unlikelyError.message);
+					}
 					this.close();
 				})
 		})
