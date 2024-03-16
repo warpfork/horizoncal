@@ -42,7 +42,7 @@ export class EventEditModal extends Modal {
 		}
 
 		// Alt-o means "okay".
-		this.scope.register(['Alt'], 'o',  (evt: KeyboardEvent, ctx: KeymapContext) => {
+		this.scope.register(['Alt'], 'o', (evt: KeyboardEvent, ctx: KeymapContext) => {
 			this._onSubmit();
 		})
 
@@ -287,7 +287,7 @@ export class CategorySelectModal extends Modal {
 		// Someday todo: i'd probably like to have the arrow keys, and pgup/pgdown, move the nav focus too.
 
 		// Alt-o means "okay".
-		this.scope.register(['Alt'], 'o',  (evt: KeyboardEvent, ctx: KeymapContext) => {
+		this.scope.register(['Alt'], 'o', (evt: KeyboardEvent, ctx: KeymapContext) => {
 			// No additional persistence efforts required in this one.  It's accumulating in-memory mutations.
 			this.close();
 		})
