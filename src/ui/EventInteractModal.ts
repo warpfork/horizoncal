@@ -43,14 +43,7 @@ export class EventInteractModal extends Modal {
 		contentEl.createDiv({ cls: "control-wide" }, (el) => {
 			new ButtonComponent(el).setButtonText("edit event")
 				.onClick((evt) => {
-					let hcEvtOrError = HCEvent.fromPath(this.app, this.data.loadedFrom!);
-					if (hcEvtOrError instanceof Error) {
-						alert("event file disappeared!");
-						this.close();
-						return
-					}
-					let hcEvt: HCEvent = hcEvtOrError;
-					new EventEditModal(this.plugin, hcEvt).open();
+					new EventEditModal(this.plugin, this.data).open();
 					this.close();
 				})
 		})
