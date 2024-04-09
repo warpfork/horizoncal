@@ -44,23 +44,35 @@ export async function openEventInEditor(plugin: HorizonCalPlugin, target: HCEven
 	// and keep a finger on one that looks neighborly but isn't an exact match.
 	// Shift focus and return early upon finding an exact match.
 	let sameZone: WorkspaceLeaf | undefined;
+	let exactMatch: boolean = false
 	workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
+		// We can't abort the iteration early if we found an exact match, so just exit as fast as possible.
+		if (exactMatch) { return }
+
 		const viewState = leaf.getViewState()
 
 		// Only interested in markdown editor views.
 		if (viewState.type !== 'markdown') return;
 
 		// If we find an exact match?  Great, focus it, and we're done.
-		if (viewState.state?.file === targetString) {
+		if (viewState.state?.file == targetString) {
+			exactMatch = true
 			workspace.setActiveLeaf(leaf, { focus: true })
 			return
 		}
 
 		// If it's... close?  Keep a finger on it; we might use it.
+		//  Finding one of these doesn't shortcut out the rest of the iteration,
+		//   so it's the last one found that takes effect.
 		if (viewState.state?.file.startsWith(plugin.settings.prefixPath)) {
 			sameZone = leaf
 		}
 	})
+	if (exactMatch) {
+		// If we found an exact match window, focusing it already happened,
+		//  and we need to do none of the further shenanigans around opening a new leaf.
+		return
+	}
 
 	// Okay, if we found no exact match... we're opening a new leaf.
 	// And maybe, near some existing leaf.  Or, maybe in a new split.
