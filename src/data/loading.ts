@@ -35,10 +35,10 @@ export function loadRange(
 	// Perhaps surprisingly, this is... not particularly recursive.
 	// The easiest way to go about it is to just ask about the existence of a folder per date;
 	// only within that to we "recurse" (wherein we expect a depth of... one).
-	let range = Interval.fromDateTimes(start, end);
-	let files: TFile[] = [];
+	const range = Interval.fromDateTimes(start, end);
+	const files: TFile[] = [];
 	range.splitBy({ days: 1 }).forEach((value) => {
-		let dateDir = plugin.app.vault.getAbstractFileByPath(
+		const dateDir = plugin.app.vault.getAbstractFileByPath(
 			`${plugin.settings.prefixPath}/${value.start!.toFormat("yyyy/MM/dd")}`,
 		);
 		// At this point we'll have null if there's no dir for that date,
@@ -60,25 +60,25 @@ export function loadRange(
 
 	// For each relevant file, get the frontmatter from the metadata cache,
 	// and if it's at all parsable, accumulate the parsed HCEvent.
-	let results: HCEvent[] = [];
+	const results: HCEvent[] = [];
 	files.forEach((file: TFile) => {
 		// Use HCEvent to do a parse.
 		// An HCEvent is something you can produce unconditionally:
 		// it just might contain data that's flagged as not valid.
 		// And because we already filtered with filename patterns,
 		// we really do expect the frontmatter in these files to be fairly valid.
-		let hcEvtOrErr = HCEvent.fromFile(plugin.app, file);
+		const hcEvtOrErr = HCEvent.fromFile(plugin.app, file);
 		if (hcEvtOrErr instanceof Error) {
 			// This probaby shouldn't be too common.
 			// And if it does happen... well, okay.  Nothing we can do but ignore it.
 			console.log("file disappeared mid walk?", hcEvtOrErr);
 			return;
 		}
-		let hcEvt: HCEvent = hcEvtOrErr;
+		const hcEvt: HCEvent = hcEvtOrErr;
 
 		// Check the validity of the value.
 		// If it's not valid, don't accumulate it in the results.
-		let hcEvtValidityErr = hcEvt.validate();
+		const hcEvtValidityErr = hcEvt.validate();
 		if (hcEvtValidityErr) {
 			// TODO use filemanager.processFrontMatter to write an "hcerror" field with message.
 			console.log("conversion error:", hcEvtValidityErr);

@@ -25,7 +25,7 @@ import { EventInteractModal } from "./EventInteractModal";
 
 export const VIEW_TYPE = "horizoncal-view";
 
-var uniq = 1;
+let uniq = 1;
 
 export class HorizonCalView extends ItemView {
 	constructor(plugin: HorizonCalPlugin, leaf: WorkspaceLeaf) {
@@ -57,7 +57,7 @@ export class HorizonCalView extends ItemView {
 		this.viewContentEl = this.containerEl.children[1];
 		this.viewContentEl.empty();
 		this.viewContentEl.addClass("horizoncal");
-		let viewNavEl = this.viewContentEl.createEl("div");
+		const viewNavEl = this.viewContentEl.createEl("div");
 		this.calUIEl = this.viewContentEl.createEl("div");
 
 		new ButtonComponent(viewNavEl)
@@ -70,11 +70,11 @@ export class HorizonCalView extends ItemView {
 		// because it's also going to contain extra menus at these positions.
 		// (I wonder if I should yeet all this in the menu/title area, actually.)
 		viewNavEl.createDiv("", (el) => {
-			let resizeBtn = new ButtonComponent(el)
+			const resizeBtn = new ButtonComponent(el)
 				.setButtonText("<‡‡‡>")
 				.setTooltip("expand/contract view");
 			resizeBtn.buttonEl.setCssProps({ margin: "0em 1em" });
-			let menuDiv = resizeBtn.buttonEl.createDiv("yolo");
+			const menuDiv = resizeBtn.buttonEl.createDiv("yolo");
 			el.setCssProps({
 				display: "inline-block",
 				position: "relative",
@@ -96,7 +96,7 @@ export class HorizonCalView extends ItemView {
 					.setButtonText("<+")
 					.setTooltip("expand view into past")
 					.onClick(() => {
-						let newRange: DateRangeInput = {
+						const newRange: DateRangeInput = {
 							start: toLuxonDateTime(
 								this.calUI.view.currentStart,
 								this.calUI,
@@ -112,7 +112,7 @@ export class HorizonCalView extends ItemView {
 					.setButtonText("+>")
 					.setTooltip("expand view into future")
 					.onClick(() => {
-						let newRange: DateRangeInput = {
+						const newRange: DateRangeInput = {
 							start: this.calUI.view.currentStart,
 							end: toLuxonDateTime(
 								this.calUI.view.currentEnd,
@@ -197,7 +197,7 @@ export class HorizonCalView extends ItemView {
 		// It's a fun API.
 		//
 		// We don't call the first `render()` until all these callbacks are wired.
-		let changeHook = makeCalendarChangeToVaultUpdateFunc(this.plugin);
+		const changeHook = makeCalendarChangeToVaultUpdateFunc(this.plugin);
 		this.calUI = new Calendar(this.calUIEl, {
 			plugins: [
 				// View plugins
@@ -259,8 +259,8 @@ export class HorizonCalView extends ItemView {
 
 			// Hooks for interactions:
 			select: (info: DateSelectArg) => {
-				let startDt = toLuxonDateTime(info.start, this.calUI);
-				let endDt = toLuxonDateTime(info.end, this.calUI);
+				const startDt = toLuxonDateTime(info.start, this.calUI);
+				const endDt = toLuxonDateTime(info.end, this.calUI);
 
 				// Invent some initial "frontmatter" and pop open a modal.
 				// The modal will handle further editing, and can persist a new file.
@@ -281,14 +281,14 @@ export class HorizonCalView extends ItemView {
 				console.log(`clicked '${info.event.id}'`, info);
 				// This hook works by... fully reloading the file assumed to back the event.
 				// This works fine for HC-native events, but will be much less fine if we add other event sources.
-				let evtOrError = HCEvent.fromPath(this.app, info.event.id);
+				const evtOrError = HCEvent.fromPath(this.app, info.event.id);
 				if (evtOrError instanceof Error) {
 					alert(
 						"cannot use HC's event editors; event id did not map to a file path!",
 					);
 					return;
 				}
-				let hcEvt = evtOrError;
+				const hcEvt = evtOrError;
 				new EventInteractModal(this.plugin, hcEvt).open();
 			},
 			eventDrop: changeHook,

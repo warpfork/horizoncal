@@ -20,7 +20,7 @@ Thus, "primitive" data means: a string, a number, a boolean... or a list of only
 
 Reified data is full objects, perhaps with methods, etc.
 Reified data doesn't tacitly guarantee itself to trivially serializable;
-it might have sometransformation back to primitive data, but that transformation is a function.
+it might have some transformation back to primitive data, but that transformation is a function.
 
 We define these three levels because we store and handle all three of them.
 They have different uses:
@@ -119,7 +119,7 @@ So why bother with code complexity in the form of transforms back from structure
 //     regardless of whether 'undefined' is a valid member of TPrimitive or TStructured.
 //     In this scenario, we have accesses to those values throw an error, rather than proceed.
 //  - When using the `updateFromUnknown` feature, it's possible to get data that doesn't satisfy
-//    TPrimitive.  In this case, we also set accessor methods to throw errors, rather than proceed.
+//     TPrimitive.  In this case, we also set accessor methods to throw errors, rather than proceed.
 //  - When a validation func returns Error, it has the option to also still return a TStructured value;
 //     if it does so, we store it and make it accessible; if it doesn't, accesses to that value with throw errors.
 //
@@ -212,7 +212,7 @@ export class Control<TPrimitive, TStructured = TPrimitive> {
 		return this;
 	}
 	tryUpdate(x: TPrimitive): Error | undefined {
-		let r = this.validateFn(x);
+		const r = this.validateFn(x);
 		this._valueGiven = x;
 		this._isInitialized = true;
 		this._isPrimitive = true; // Assume our 'x' was lawful!
@@ -265,7 +265,7 @@ export class Control<TPrimitive, TStructured = TPrimitive> {
 		if (fieldName) {
 			value = hasProp(value, fieldName) ? value[fieldName] : undefined;
 		}
-		let primOrError = this.unknownHandlerFn(value);
+		const primOrError = this.unknownHandlerFn(value);
 		if (primOrError instanceof Error) {
 			// Pave basically everything.
 			this._isInitialized = true;
@@ -364,7 +364,7 @@ export function validateString(x: string): ValidationResult<string, string> {
 export function validateListOfNonemptyString(
 	x: string[],
 ): ValidationResult<string[], string[]> {
-	let onlyNonempties = x.filter((s) => s.length > 1);
+	const onlyNonempties = x.filter((s) => s.length > 1);
 	return { structured: onlyNonempties, simplified: onlyNonempties };
 }
 

@@ -19,12 +19,12 @@ export function makeEventSourceFunc(
 	cal: CalendarApi,
 ): EventSourceFunc {
 	return (info: EventSourceFuncArg): Promise<EventInput[]> => {
-		let hcEvts = loadRange(
+		const hcEvts = loadRange(
 			plugin,
 			toLuxonDateTime(info.start, cal),
 			toLuxonDateTime(info.end, cal),
 		);
-		let fcEvts = hcEvts.map(
+		const fcEvts = hcEvts.map(
 			(hcEvt): EventInput => hcEvt.toFCdata(plugin.settings),
 		);
 		return Promise.resolve(fcEvts);
@@ -60,7 +60,7 @@ export function registerVaultChangesToCalendarUpdates(
 			"rename",
 			(file: TAbstractFile, oldPath: string) => {
 				console.log("rename event!");
-				let fcEvt = cal.getEventById(oldPath);
+				const fcEvt = cal.getEventById(oldPath);
 				if (fcEvt != null) {
 					fcEvt.setProp("id", file.path);
 				}
@@ -96,9 +96,9 @@ export function registerVaultChangesToCalendarUpdates(
 				// Load the event.  Or try to.
 				// Does it look alright?
 				// FUTURE: we should probably have a writeback of an "hcError" field, if not.
-				let hcEvt = HCEvent.fromFrontmatter(cache.frontmatter);
+				const hcEvt = HCEvent.fromFrontmatter(cache.frontmatter);
 				hcEvt.loadedFrom = file.path;
-				let errs = hcEvt.validate();
+				const errs = hcEvt.validate();
 				if (errs) {
 					console.log(
 						`file '${file.path}' didn't validate as an HCEvent:`,
@@ -111,7 +111,7 @@ export function registerVaultChangesToCalendarUpdates(
 				// If not: we add it one.
 				// (TODO: should filter for the relevance of date.)
 				// ((Possible we should have this hook at plugin scope rather than view scope, considering it might want to do other fixes anyway.))
-				let fcEvt = cal.getEventById(file.path);
+				const fcEvt = cal.getEventById(file.path);
 				if (fcEvt == null) {
 					// New event!
 					//  Give the magic name of our built-in event source that did initial loading,
@@ -125,8 +125,8 @@ export function registerVaultChangesToCalendarUpdates(
 					// Could we just nuke and replace the event?
 					// Maybe, but in some cases that might fuck with the UI;
 					// for example, on mobile, you have to hold-select something to make it adjustable.
-					let newData: EventInput = hcEvt.toFCdata(plugin.settings);
-					for (let prop in newData) {
+					const newData: EventInput = hcEvt.toFCdata(plugin.settings);
+					for (const prop in newData) {
 						if (prop == "id") continue; // Already sure of that thanks.
 						if (prop == "start") {
 							fcEvt.setStart(newData[prop]!);
@@ -152,7 +152,7 @@ export function registerVaultChangesToCalendarUpdates(
 				console.log("delete event!");
 				// How very fortunate that file paths alone are event IDs.
 				// The 'prevCache' value is best-effort, so if we needed it, we'd be in trouble.
-				let fcEvt = cal.getEventById(file.path);
+				const fcEvt = cal.getEventById(file.path);
 				if (fcEvt != null) {
 					fcEvt.remove();
 				}
@@ -181,7 +181,7 @@ export function makeCalendarChangeToVaultUpdateFunc(
 			info.revert();
 			return;
 		}
-		let file = plugin.app.vault.getAbstractFileByPath(info.event.id);
+		const file = plugin.app.vault.getAbstractFileByPath(info.event.id);
 		if (!file || !(file instanceof TFile)) {
 			alert("event id did not map to a file path!");
 			info.revert();
@@ -202,7 +202,7 @@ export function makeCalendarChangeToVaultUpdateFunc(
 				// Do some basic validity checks.
 				// f.eks. if timezone strings aren't valid, this is gonna go south from here.
 				// We also call revert on the calendar's event if things are invalid.
-				let validityErr = hcEvt.validate();
+				const validityErr = hcEvt.validate();
 				if (validityErr) {
 					info.revert();
 					alert("event change invalid:\n" + validityErr);
@@ -212,11 +212,11 @@ export function makeCalendarChangeToVaultUpdateFunc(
 				// Shift the dates we got from fullcalendar back into the timezones this event specified.
 				//  Fullcalendar doesn't retain timezones -- it flattens everything to an offset only (because javascript Date forces that),
 				//   and it also shifts everything to the calendar-wide tz offset.  This is quite far from what we want.
-				let newStartDt = toLuxonDateTime(
+				const newStartDt = toLuxonDateTime(
 					info.event.start as Date,
 					info.view.calendar,
 				).setZone(hcEvt.evtTZ.valueStructured);
-				let newEndDt = toLuxonDateTime(
+				const newEndDt = toLuxonDateTime(
 					info.event.end as Date,
 					info.view.calendar,
 				).setZone(
@@ -243,8 +243,8 @@ export function makeCalendarChangeToVaultUpdateFunc(
 
 		// Step three: decide if the filename is still applicable or needs to change -- and possibly change it!
 		// If we change the filename, we'll also change the event ID.
-		let path = HCEventFilePath.fromEvent(hcEvt!);
-		let wholePath = path.wholePath;
+		const path = HCEventFilePath.fromEvent(hcEvt!);
+		const wholePath = path.wholePath;
 		if (wholePath != info.event.id) {
 			console.log("moving to", wholePath);
 			try {
@@ -254,7 +254,9 @@ export function makeCalendarChangeToVaultUpdateFunc(
 				await plugin.app.vault.createFolder(
 					`${plugin.settings.prefixPath}/${path.dirs}`,
 				);
-			} catch {}
+			} catch {
+				// Eslint complains about empty blocks.  :shrug:.
+			}
 			// FIXME: filename collision handling needs a better definition.
 			//  Right now, we _already updated_ the frontmatter in the file (and that's a different filesystem atomicity phase),
 			//  so we can end up with the filename not being in sync.

@@ -27,7 +27,7 @@ export class EventInteractModal extends Modal {
 	data: HCEvent;
 
 	onOpen() {
-		let { titleEl, contentEl, containerEl } = this;
+		const { titleEl, contentEl, containerEl } = this;
 		containerEl.addClass("horizoncal", "hc-evt-interact-modal");
 
 		titleEl.createSpan({ text: "viewing event:" });
@@ -46,7 +46,7 @@ export class EventInteractModal extends Modal {
 			new ButtonComponent(el)
 				.setButtonText("open in markdown editor")
 				.onClick(async (evt) => {
-					let unlikelyError = await openEventInEditor(
+					const unlikelyError = await openEventInEditor(
 						this.plugin,
 						this.data,
 					);
@@ -59,14 +59,14 @@ export class EventInteractModal extends Modal {
 		contentEl.createDiv({ cls: "control-wide" }, (el) => {
 			// A saftey togg toggle next to the delete button makes it so two clicks are required
 			// (without introducing yet another modal).  Debatable if this is the prettier way or not, but it does the trick.
-			let toggle = new ToggleComponent(el);
+			const toggle = new ToggleComponent(el);
 			toggle.toggleEl.addClass("delete-safety");
-			let button = new ButtonComponent(el)
+			const button = new ButtonComponent(el)
 				.setButtonText("delete event")
 				.setDisabled(true)
 				.setWarning()
 				.onClick((evt) => {
-					let file = this.app.vault.getAbstractFileByPath(
+					const file = this.app.vault.getAbstractFileByPath(
 						this.data.loadedFrom!,
 					);
 					if (!file || !(file instanceof TFile)) {

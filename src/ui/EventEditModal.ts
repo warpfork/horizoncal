@@ -32,7 +32,7 @@ export class EventEditModal extends Modal {
 	onOpen() {
 		this._defragilify();
 
-		let { contentEl, containerEl } = this;
+		const { contentEl, containerEl } = this;
 		containerEl.addClass("horizoncal");
 		containerEl.addClass("hc-evt-edit-modal");
 		if (this.data.loadedFrom) {
@@ -50,7 +50,7 @@ export class EventEditModal extends Modal {
 			},
 		);
 
-		let widgeteer = <TStructured>(params: {
+		const widgeteer = <TStructured>(params: {
 			// Consider it constrained that "TStructured as DateTime, when type=='date'".
 			// (I think that could be done with a sufficiently massive union type,
 			// but I'm not really sure it's worth it :))
@@ -60,7 +60,7 @@ export class EventEditModal extends Modal {
 			desc?: string;
 			type: "text" | "date" | "time" | "toggle";
 		}) => {
-			let setting = new Setting(contentEl);
+			const setting = new Setting(contentEl);
 			setting.setName(params.name);
 			switch (params.type) {
 				case "text":
@@ -68,7 +68,7 @@ export class EventEditModal extends Modal {
 						comp
 							.setValue(params.prop.valuePrimitive!)
 							.onChange((value) => {
-								let err = params.prop.tryUpdate(value);
+								const err = params.prop.tryUpdate(value);
 								comp.inputEl.toggleClass("invalid", !!err);
 							}),
 					);
@@ -82,7 +82,7 @@ export class EventEditModal extends Modal {
 						{ type: "date", value: params.prop.valuePrimitive },
 						(el) => {
 							el.addEventListener("change", () => {
-								let err = params.prop.tryUpdate(el.value);
+								const err = params.prop.tryUpdate(el.value);
 								el.toggleClass("invalid", !!err);
 							});
 						},
@@ -94,7 +94,7 @@ export class EventEditModal extends Modal {
 						{ type: "time", value: params.prop.valuePrimitive },
 						(el) => {
 							el.addEventListener("change", () => {
-								let err = params.prop.tryUpdate(el.value);
+								const err = params.prop.tryUpdate(el.value);
 								el.toggleClass("invalid", !!err);
 							});
 						},
@@ -167,7 +167,7 @@ export class EventEditModal extends Modal {
 				btn.setClass("save");
 				btn.onClick(async () => {
 					await this._onSubmit();
-					let unlikelyError = await openEventInEditor(
+					const unlikelyError = await openEventInEditor(
 						this.plugin,
 						this.data,
 					);
@@ -210,8 +210,8 @@ export class EventEditModal extends Modal {
 		// Fortunately, the handler we want to get rid of is on its entire own node.
 		// It appears to always be the first child, but we'll do a class check
 		// just to be on the safe side.
-		for (var i = 0; i < this.containerEl.children.length; i++) {
-			let child = this.containerEl.children[i];
+		for (let i = 0; i < this.containerEl.children.length; i++) {
+			const child = this.containerEl.children[i];
 			if (child.hasClass("modal-bg")) {
 				child.remove();
 			}
@@ -222,7 +222,7 @@ export class EventEditModal extends Modal {
 		// The UI should've already highlighted invalid fields,
 		// but if you still clicked go, you need a kick in the shins.
 		// This seems like a rare case of "alert is actually the right UX".
-		let error = this.data.validate();
+		const error = this.data.validate();
 		if (error) {
 			alert(error);
 			return;
@@ -230,7 +230,7 @@ export class EventEditModal extends Modal {
 
 		let file: TFile;
 		if (this.data.loadedFrom) {
-			let probFile = this.app.vault.getAbstractFileByPath(
+			const probFile = this.app.vault.getAbstractFileByPath(
 				this.data.loadedFrom!,
 			);
 			if (!probFile || !(probFile instanceof TFile)) {
@@ -241,7 +241,7 @@ export class EventEditModal extends Modal {
 			}
 			file = probFile;
 		} else {
-			let path = HCEventFilePath.fromEvent(this.data);
+			const path = HCEventFilePath.fromEvent(this.data);
 			try {
 				// Wrapped in a `try` because it throws on "already exists", which is not a real problem.
 				// Might be worth inspecting the error and reacting better if it's something else,
@@ -249,7 +249,9 @@ export class EventEditModal extends Modal {
 				await this.plugin.app.vault.createFolder(
 					`${this.plugin.settings.prefixPath}/${path.dirs}`,
 				);
-			} catch {}
+			} catch {
+				// Eslint complains about empty blocks.  :shrug:.
+			}
 			// FIXME: file-already-exists should be handled in a less awful way.
 			//  Right now, we balk, and don't do anything destructive (on disk nor in UI), but it doesn't offer good guidance.
 			try {
@@ -286,7 +288,7 @@ export class EventEditModal extends Modal {
 	}
 
 	onClose() {
-		let { contentEl } = this;
+		const { contentEl } = this;
 
 		// No persistence unless you clicked our submit button.
 		//
@@ -340,9 +342,9 @@ export class CategorySelectModal extends Modal {
 								),
 							);
 							tog.onChange((on: boolean) => {
-								let prev =
+								const prev =
 									this.parent.data.evtCat.valuePrimitive;
-								let next = [...prev];
+								const next = [...prev];
 								if (on) {
 									next.push("#evt/" + row);
 								} else {

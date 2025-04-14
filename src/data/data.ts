@@ -27,7 +27,7 @@ export class HCEvent {
 	// (In the wildest case that 'fm' is null or empty, you'll simply have a validation error on every single field.)
 	static fromFrontmatter(fm: unknown): HCEvent {
 		// Note that obsidian frontmatter gives you nulls for fields that present but have no apparent value.
-		let v = new HCEvent();
+		const v = new HCEvent();
 		v.title = new Control(
 			"title",
 			validateString,
@@ -97,12 +97,12 @@ export class HCEvent {
 				`could not load HCEvent data from '${file}' -- not a file`,
 			);
 		}
-		let metadata = app.metadataCache.getFileCache(file);
-		let evtFmRaw = metadata!.frontmatter!; // I have seen this fail once.  When obsidian is freshly launched.  And the HC View was already open on launch.
+		const metadata = app.metadataCache.getFileCache(file);
+		const evtFmRaw = metadata!.frontmatter!; // I have seen this fail once.  When obsidian is freshly launched.  And the HC View was already open on launch.
 		// ^ it's megabad if this borks?  I don't understand why but it causes all future edits to not cause visual updates until you close and reopen the view?
 		//     the error boils up on fetchSourcesByIdes in fullcal and three "anonymous" methods above that, so I can't tell what this is really about.   OH...  register order?
 		// Do we get change events happens-after this when metadata _does_ get loaded, so I can just quietly ignore this particular kind of error?
-		let hcEvt = this.fromFrontmatter(evtFmRaw);
+		const hcEvt = this.fromFrontmatter(evtFmRaw);
 		hcEvt.loadedFrom = file.path;
 		return hcEvt;
 	}
@@ -118,7 +118,7 @@ export class HCEvent {
 	// There's also the small matter cross-field checks like "is the end actually after the beginning?" --
 	// those aren't currently validated either.
 	validate(): Error | undefined {
-		let errors: Error[] = [];
+		const errors: Error[] = [];
 		this.allControls().forEach((control) => control.foldErrors(errors));
 		if (errors.length == 1) {
 			return errors[0];
@@ -188,19 +188,19 @@ export class HCEvent {
 		if (!this.loadedFrom) {
 			throw new Error("event will not have an ID");
 		}
-		let cats = [...this.evtCat.valueStructured];
+		const cats = [...this.evtCat.valueStructured];
 		cats.sort(
 			(a, b) =>
 				(settings.categories[a]?.effectPriority || 0) -
 				(settings.categories[b]?.effectPriority || 0),
 		);
-		let applicableProps: EventCategoryProperties = {
+		const applicableProps: EventCategoryProperties = {
 			color: "#146792",
 		};
 		cats.forEach((cat) => {
 			Object.assign(applicableProps, settings.categories[cat]);
 		});
-		let extraClasses: string[] = [];
+		const extraClasses: string[] = [];
 		if (applicableProps["opacity"]) {
 			// Ah, the glorious rounding problem.
 			if (applicableProps["opacity"] >= 80) {
@@ -256,8 +256,8 @@ export class HCEvent {
 		// We'll keep this object on the side with a copy of the original data,
 		// then merge back any remaining properties that aren't ours at the end.
 		// This dance creates stable ordering (and shifts user content to the bottom).
-		let copy: any = {};
-		for (var prop in fm) {
+		const copy: any = {};
+		for (const prop in fm) {
 			if (!(prop in this)) {
 				copy[prop] = fm[prop];
 			}
@@ -298,7 +298,7 @@ export class HCEvent {
 
 		// Now copy over any remaining properties in the original.
 		// This is part of the dance to control property orders.
-		for (var prop in copy) {
+		for (const prop in copy) {
 			if (!(prop in fm)) {
 				fm[prop] = copy[prop];
 			}
@@ -308,7 +308,7 @@ export class HCEvent {
 
 function validateDate(ymd: string): ValidationResult<string, DateTime> {
 	const fmt = "yyyy-MM-dd";
-	let parsed = DateTime.fromFormat(ymd, fmt);
+	const parsed = DateTime.fromFormat(ymd, fmt);
 	if (parsed.invalidReason) {
 		return {
 			error: new Error(
@@ -324,7 +324,7 @@ function validateDate(ymd: string): ValidationResult<string, DateTime> {
 	};
 }
 function validateTime(hhmm: string): ValidationResult<string, Duration> {
-	let parsed = DateTime.fromFormat(hhmm, "HH:mm");
+	const parsed = DateTime.fromFormat(hhmm, "HH:mm");
 	if (parsed.invalidReason) {
 		return {
 			error: Error(
@@ -354,7 +354,7 @@ function validateTZ_defaultLocal(
 	namedZone: string | undefined,
 ): ValidationResult<string | undefined, string> {
 	if (!namedZone) {
-		let zn = DateTime.local().zoneName;
+		const zn = DateTime.local().zoneName;
 		return { structured: zn, simplified: zn };
 	}
 	return validateTZ(namedZone);
@@ -362,12 +362,12 @@ function validateTZ_defaultLocal(
 function validateEvtCatList(
 	prim: string[],
 ): ValidationResult<string[], string[]> {
-	let cleanedPrim = prim
+	const cleanedPrim = prim
 		.filter((s) => s.length > 1)
 		.map((s) => (s.startsWith("#evt/") ? s : "#evt/" + s))
 		.sort()
 		.unique();
-	let structured = cleanedPrim.map((s) => s.substring(5));
+	const structured = cleanedPrim.map((s) => s.substring(5));
 	return { structured: structured, simplified: cleanedPrim };
 }
 
