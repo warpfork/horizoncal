@@ -1,4 +1,3 @@
-
 /*
 Data Readiness Levels
 =====================
@@ -76,7 +75,6 @@ So why bother with code complexity in the form of transforms back from structure
 
 */
 
-
 // Control stores a value and associates it with validation functions.
 // Optionally, it also caches a parsed, reified form of the value.
 //
@@ -133,9 +131,9 @@ export class Control<TPrimitive, TStructured = TPrimitive> {
 		validateFn: ValidationFn<TPrimitive, TStructured>,
 		unknownHandlerFn?: FromUnknownFn<TPrimitive>,
 	) {
-		this.name = name
-		this.validateFn = validateFn
-		this.unknownHandlerFn = unknownHandlerFn
+		this.name = name;
+		this.validateFn = validateFn;
+		this.unknownHandlerFn = unknownHandlerFn;
 	}
 
 	// Configuration:
@@ -157,19 +155,25 @@ export class Control<TPrimitive, TStructured = TPrimitive> {
 	// Internal:
 	private mustExist(): never | void {
 		if (!this._isInitialized) {
-			throw new Error(`access of Control data "${this.name}" that was never initialized`);
+			throw new Error(
+				`access of Control data "${this.name}" that was never initialized`,
+			);
 		}
 	}
 	private mustPrimitive(): never | void {
 		this.mustExist();
 		if (!this._isPrimitive) {
-			throw new Error(`access of Control data "${this.name}" was not initialized with data of valid type`);
+			throw new Error(
+				`access of Control data "${this.name}" was not initialized with data of valid type`,
+			);
 		}
 	}
 	private mustStructured(): never | void {
 		this.mustExist();
 		if (!this._isStructured) {
-			throw new Error(`access of Control data "${this.name}" with no structured data assigned`);
+			throw new Error(
+				`access of Control data "${this.name}" with no structured data assigned`,
+			);
 		}
 	}
 
@@ -197,41 +201,41 @@ export class Control<TPrimitive, TStructured = TPrimitive> {
 	foldErrors(acc: Error[]): Error[] {
 		this.mustExist();
 		if (this._error) {
-			acc.push(new Error(`${this.name}: ${this._error}`))
+			acc.push(new Error(`${this.name}: ${this._error}`));
 		}
-		return acc
+		return acc;
 	}
 
 	// Mutators:
 	update(x: TPrimitive): this {
-		this.tryUpdate(x)
-		return this
+		this.tryUpdate(x);
+		return this;
 	}
 	tryUpdate(x: TPrimitive): Error | undefined {
-		let r = this.validateFn(x)
+		let r = this.validateFn(x);
 		this._valueGiven = x;
 		this._isInitialized = true;
 		this._isPrimitive = true; // Assume our 'x' was lawful!
 		if ("simplified" in r) {
-			this._valuePrimitive = r.simplified!
+			this._valuePrimitive = r.simplified!;
 		} else {
-			this._valuePrimitive = x
+			this._valuePrimitive = x;
 		}
 		if ("structured" in r) {
-			this._isStructured = true
-			this._valueStructured = r.structured
+			this._isStructured = true;
+			this._valueStructured = r.structured;
 		} else {
-			this._isStructured = false
-			this._valueStructured = undefined as unknown as TStructured // Unlawful, but better than stale data, and accessors guard it.
+			this._isStructured = false;
+			this._valueStructured = undefined as unknown as TStructured; // Unlawful, but better than stale data, and accessors guard it.
 		}
 		if ("error" in r) {
-			this._isValid = false
-			this._error = r.error
+			this._isValid = false;
+			this._error = r.error;
 		} else {
-			this._isValid = true
-			this._error = undefined
+			this._isValid = true;
+			this._error = undefined;
 		}
-		return r.error
+		return r.error;
 	}
 
 	// updateFromUnknown updates accepts a total unknown input value,
@@ -246,17 +250,22 @@ export class Control<TPrimitive, TStructured = TPrimitive> {
 	// updateFrom also performs all the typechecking that "field" is a field, "val" is an object and isn't null, etc,
 	// and in doing this, is covering all the checks you probably forgot, and also satisfying the typescript compiler.
 	updateFromUnknown(value: unknown, fieldName?: string): this {
-		this.tryUpdateFromUnknown(value, fieldName)
-		return this
+		this.tryUpdateFromUnknown(value, fieldName);
+		return this;
 	}
-	tryUpdateFromUnknown(value: unknown, fieldName?: string): Error | undefined {
+	tryUpdateFromUnknown(
+		value: unknown,
+		fieldName?: string,
+	): Error | undefined {
 		if (!this.unknownHandlerFn) {
-			throw new Error("cannot use unknown value processing unless an unknownHandlerFn was given during Control construction!")
+			throw new Error(
+				"cannot use unknown value processing unless an unknownHandlerFn was given during Control construction!",
+			);
 		}
 		if (fieldName) {
 			value = hasProp(value, fieldName) ? value[fieldName] : undefined;
 		}
-		let primOrError = this.unknownHandlerFn(value)
+		let primOrError = this.unknownHandlerFn(value);
 		if (primOrError instanceof Error) {
 			// Pave basically everything.
 			this._isInitialized = true;
@@ -265,25 +274,32 @@ export class Control<TPrimitive, TStructured = TPrimitive> {
 			this._isStructured = false;
 			this._valueGiven = value;
 			this._valuePrimitive = undefined as unknown as TPrimitive; // Unlawful, but better than stale data, and accessors guard it.
-			this._valueStructured = undefined as unknown as TStructured;  // Unlawful, but better than stale data, and accessors guard it.
+			this._valueStructured = undefined as unknown as TStructured; // Unlawful, but better than stale data, and accessors guard it.
 			this._error = primOrError;
 			return primOrError;
 		} else {
-			return this.tryUpdate(primOrError)
+			return this.tryUpdate(primOrError);
 		}
 	}
 }
 
-export class ControlOptional<TPrimitive, TStructured = undefined> extends Control<TPrimitive | undefined, TStructured | undefined> {
+export class ControlOptional<
+	TPrimitive,
+	TStructured = undefined,
+> extends Control<TPrimitive | undefined, TStructured | undefined> {
 	constructor(
 		name: string,
 		validateFn: ValidationFn<TPrimitive, TStructured>,
-		unknownHandlerFn?: FromUnknownFn<TPrimitive>
+		unknownHandlerFn?: FromUnknownFn<TPrimitive>,
 	) {
 		if (unknownHandlerFn) {
-			super(name, validationOptional(validateFn), unknownAllowingUndefined(unknownHandlerFn))
+			super(
+				name,
+				validationOptional(validateFn),
+				unknownAllowingUndefined(unknownHandlerFn),
+			);
 		} else {
-			super(name, validationOptional(validateFn))
+			super(name, validationOptional(validateFn));
 		}
 	}
 }
@@ -296,8 +312,11 @@ export class ControlOptional<TPrimitive, TStructured = undefined> extends Contro
 // (Unfortunately, it also seems to permit you to index _any_ key.
 // I have no recommendtation for how to deal with this, other than
 // to use this function only in a relatively tightly confined area.)
-function hasProp<K extends PropertyKey>(obj: unknown, key: K | null | undefined): obj is Record<K, unknown> {
-	return key != null && obj != null && typeof obj === 'object' && key in obj;
+function hasProp<K extends PropertyKey>(
+	obj: unknown,
+	key: K | null | undefined,
+): obj is Record<K, unknown> {
+	return key != null && obj != null && typeof obj === "object" && key in obj;
 }
 
 /*=============================================================================================
@@ -305,14 +324,14 @@ function hasProp<K extends PropertyKey>(obj: unknown, key: K | null | undefined)
 */
 
 export type ValidationResult<TPrimitive, TStructured = TPrimitive> =
-	{ error: Error } |
-	{ structured: TStructured, error?: Error, simplified?: TPrimitive };
+	| { error: Error }
+	| { structured: TStructured; error?: Error; simplified?: TPrimitive };
 
-export type ValidationFn<TPrimitive, TStructured> = (x: TPrimitive) => ValidationResult<TPrimitive, TStructured>
+export type ValidationFn<TPrimitive, TStructured> = (
+	x: TPrimitive,
+) => ValidationResult<TPrimitive, TStructured>;
 
-export type FromUnknownFn<TPrimitive> = (x: unknown) => TPrimitive | Error
-
-
+export type FromUnknownFn<TPrimitive> = (x: unknown) => TPrimitive | Error;
 
 /*=============================================================================================
 	Some frequently-used validation functions and helpers for assembling them.
@@ -322,65 +341,69 @@ export type FromUnknownFn<TPrimitive> = (x: unknown) => TPrimitive | Error
 */
 
 // You probably don't need to use this yourself -- it will be applied automatically to any unknownHandlerFn given to a ControlOptional constructor.
-export function validationOptional<TPrimitive, TStructured>(fn: ValidationFn<TPrimitive, TStructured>): ValidationFn<TPrimitive | undefined, TStructured | undefined> {
-	return function (x: TPrimitive | undefined): ValidationResult<TPrimitive | undefined, TStructured | undefined> {
+export function validationOptional<TPrimitive, TStructured>(
+	fn: ValidationFn<TPrimitive, TStructured>,
+): ValidationFn<TPrimitive | undefined, TStructured | undefined> {
+	return function (
+		x: TPrimitive | undefined,
+	): ValidationResult<TPrimitive | undefined, TStructured | undefined> {
 		if (x === undefined) {
-			return { structured: undefined, simplified: undefined }
+			return { structured: undefined, simplified: undefined };
 		}
 		if (typeof x == "string" && x === "") {
-			return { structured: undefined, simplified: undefined }
+			return { structured: undefined, simplified: undefined };
 		}
-		return fn(x)
-	}
+		return fn(x);
+	};
 }
 
 export function validateString(x: string): ValidationResult<string, string> {
-	return { structured: x }
+	return { structured: x };
 }
 
-export function validateListOfNonemptyString(x: string[]): ValidationResult<string[], string[]> {
-	let onlyNonempties = x.filter((s) => s.length > 1)
-	return { structured: onlyNonempties, simplified: onlyNonempties }
+export function validateListOfNonemptyString(
+	x: string[],
+): ValidationResult<string[], string[]> {
+	let onlyNonempties = x.filter((s) => s.length > 1);
+	return { structured: onlyNonempties, simplified: onlyNonempties };
 }
 
 // You probably don't need to use this yourself -- it will be applied automatically to any unknownHandlerFn given to a ControlOptional constructor.
 // You might want it if doing advanced constructions like allowing undefined in TPrimitive but not in TStructured, though.
-export function unknownAllowingUndefined<TPrimitive>(fn: FromUnknownFn<TPrimitive>): FromUnknownFn<TPrimitive | undefined> {
+export function unknownAllowingUndefined<TPrimitive>(
+	fn: FromUnknownFn<TPrimitive>,
+): FromUnknownFn<TPrimitive | undefined> {
 	return function (x: unknown): TPrimitive | undefined | Error {
 		if (x === undefined) {
-			return undefined
+			return undefined;
 		}
-		return fn(x)
-	}
+		return fn(x);
+	};
 }
 
 export function unknownToString(x: unknown): string | Error {
 	if (typeof x === "string") {
-		return x
+		return x;
 	}
-	return new Error(`expected a string`)
-
+	return new Error(`expected a string`);
 }
 
 export function unknownToStringCoercive(x: unknown): string {
 	if (typeof x === "string") {
-		return x
+		return x;
 	}
 	if (x === null || x === undefined) {
-		return ""
+		return "";
 	}
-	return x + ""
+	return x + "";
 }
 
 export function unknownToStringListCoercive(x: unknown): string[] {
-	if (Array.isArray(x))
-		return x.map((v) => unknownToStringCoercive(v))
+	if (Array.isArray(x)) return x.map((v) => unknownToStringCoercive(v));
 
-	if (typeof x == "string")
-		return [x]
+	if (typeof x == "string") return [x];
 
-	if (x === undefined || x === null)
-		return []
+	if (x === undefined || x === null) return [];
 
-	return [unknownToStringCoercive(x)]
+	return [unknownToStringCoercive(x)];
 }

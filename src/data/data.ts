@@ -1,4 +1,3 @@
-
 import { App, TAbstractFile, TFile } from "obsidian";
 
 import {
@@ -8,11 +7,11 @@ import {
 	unknownAllowingUndefined,
 	unknownToStringCoercive,
 	unknownToStringListCoercive,
-	validateString
+	validateString,
 } from "./datacontrol";
 
 import { EventInput } from "@fullcalendar/core";
-import { DateTime, Duration, IANAZone } from 'luxon';
+import { DateTime, Duration, IANAZone } from "luxon";
 import { EventCategoryProperties } from "../settings/categories";
 import { HorizonCalSettings } from "../settings/settings";
 
@@ -29,14 +28,46 @@ export class HCEvent {
 	static fromFrontmatter(fm: unknown): HCEvent {
 		// Note that obsidian frontmatter gives you nulls for fields that present but have no apparent value.
 		let v = new HCEvent();
-		v.title = new Control("title", validateString, unknownToStringCoercive).updateFromUnknown(fm, 'title');
-		v.evtCat = new Control("evtCat", validateEvtCatList, unknownToStringListCoercive).updateFromUnknown(fm, 'evtCat');
-		v.evtDate = new Control("evtDate", validateDate, unknownToStringCoercive).updateFromUnknown(fm, 'evtDate');
-		v.evtTime = new ControlOptional("evtTime", validateTime, unknownToStringCoercive).updateFromUnknown(fm, 'evtTime');
-		v.evtTZ = new Control("evtTZ", validateTZ_defaultLocal, unknownAllowingUndefined(unknownToStringCoercive)).updateFromUnknown(fm, 'evtTZ');
-		v.endDate = new ControlOptional("endDate", validateDate, unknownToStringCoercive).updateFromUnknown(fm, 'endDate');
-		v.endTime = new ControlOptional("endTime", validateTime, unknownToStringCoercive).updateFromUnknown(fm, 'endTime');
-		v.endTZ = new ControlOptional("endTZ", validateTZ, unknownToStringCoercive).updateFromUnknown(fm, 'endTZ');
+		v.title = new Control(
+			"title",
+			validateString,
+			unknownToStringCoercive,
+		).updateFromUnknown(fm, "title");
+		v.evtCat = new Control(
+			"evtCat",
+			validateEvtCatList,
+			unknownToStringListCoercive,
+		).updateFromUnknown(fm, "evtCat");
+		v.evtDate = new Control(
+			"evtDate",
+			validateDate,
+			unknownToStringCoercive,
+		).updateFromUnknown(fm, "evtDate");
+		v.evtTime = new ControlOptional(
+			"evtTime",
+			validateTime,
+			unknownToStringCoercive,
+		).updateFromUnknown(fm, "evtTime");
+		v.evtTZ = new Control(
+			"evtTZ",
+			validateTZ_defaultLocal,
+			unknownAllowingUndefined(unknownToStringCoercive),
+		).updateFromUnknown(fm, "evtTZ");
+		v.endDate = new ControlOptional(
+			"endDate",
+			validateDate,
+			unknownToStringCoercive,
+		).updateFromUnknown(fm, "endDate");
+		v.endTime = new ControlOptional(
+			"endTime",
+			validateTime,
+			unknownToStringCoercive,
+		).updateFromUnknown(fm, "endTime");
+		v.endTZ = new ControlOptional(
+			"endTZ",
+			validateTZ,
+			unknownToStringCoercive,
+		).updateFromUnknown(fm, "endTZ");
 		return v;
 	}
 
@@ -57,9 +88,14 @@ export class HCEvent {
 	}
 
 	// Ghastly little helper for nullablity type appeasement.
-	private static _fromFile(app: App, file: TFile | TAbstractFile | null): HCEvent | Error {
+	private static _fromFile(
+		app: App,
+		file: TFile | TAbstractFile | null,
+	): HCEvent | Error {
 		if (!file || !(file instanceof TFile)) {
-			return new Error(`could not load HCEvent data from '${file}' -- not a file`);
+			return new Error(
+				`could not load HCEvent data from '${file}' -- not a file`,
+			);
 		}
 		let metadata = app.metadataCache.getFileCache(file);
 		let evtFmRaw = metadata!.frontmatter!; // I have seen this fail once.  When obsidian is freshly launched.  And the HC View was already open on launch.
@@ -83,14 +119,14 @@ export class HCEvent {
 	// those aren't currently validated either.
 	validate(): Error | undefined {
 		let errors: Error[] = [];
-		this.allControls().forEach((control) => control.foldErrors(errors))
+		this.allControls().forEach((control) => control.foldErrors(errors));
 		if (errors.length == 1) {
-			return errors[0]
+			return errors[0];
 		}
 		if (errors.length > 1) {
-			let estrlist = ""
-			errors.forEach((err) => estrlist += ` - ${err}\n`)
-			return new Error("multiple validation errors:\n" + estrlist)
+			let estrlist = "";
+			errors.forEach((err) => (estrlist += ` - ${err}\n`));
+			return new Error("multiple validation errors:\n" + estrlist);
 		}
 	}
 
@@ -117,21 +153,25 @@ export class HCEvent {
 			this.endDate,
 			this.endTime,
 			this.endTZ,
-		]
+		];
 	}
 
 	// Returns a complete DateTime with the date, the time, and the timezone assembled.
 	getCompleteStartDt(): DateTime {
-		return this.evtDate.valueStructured.plus(this.evtTime.valueStructured!).setZone(this.evtTZ.valuePrimitive, { keepLocalTime: true })
+		return this.evtDate.valueStructured
+			.plus(this.evtTime.valueStructured!)
+			.setZone(this.evtTZ.valuePrimitive, { keepLocalTime: true });
 	}
 
 	// Returns a complete DateTime with the date, the time, and the timezone assembled.
 	// This function handles defaulting to the start day and start timezone.
 	getCompleteEndDt(): DateTime {
 		let v = this.evtDate.valueStructured;
-		v = (this.endDate.valueStructured) ? this.endDate.valueStructured : v;
+		v = this.endDate.valueStructured ? this.endDate.valueStructured : v;
 		v = v.plus(this.endTime.valueStructured!);
-		v = (this.endTZ.valuePrimitive) ? v.setZone(this.endTZ.valuePrimitive, { keepLocalTime: true }) : v.setZone(this.evtTZ.valuePrimitive, { keepLocalTime: true });
+		v = this.endTZ.valuePrimitive
+			? v.setZone(this.endTZ.valuePrimitive, { keepLocalTime: true })
+			: v.setZone(this.evtTZ.valuePrimitive, { keepLocalTime: true });
 		return v;
 	}
 
@@ -146,39 +186,43 @@ export class HCEvent {
 	// (Changing plugin settings should generally be followed by a full refresh of FulLCalendar.)
 	toFCdata(settings: HorizonCalSettings): EventInput {
 		if (!this.loadedFrom) {
-			throw new Error("event will not have an ID")
+			throw new Error("event will not have an ID");
 		}
 		let cats = [...this.evtCat.valueStructured];
-		cats.sort((a, b) => ((settings.categories[a]?.effectPriority || 0) - (settings.categories[b]?.effectPriority || 0)))
+		cats.sort(
+			(a, b) =>
+				(settings.categories[a]?.effectPriority || 0) -
+				(settings.categories[b]?.effectPriority || 0),
+		);
 		let applicableProps: EventCategoryProperties = {
 			color: "#146792",
 		};
 		cats.forEach((cat) => {
-			Object.assign(applicableProps, settings.categories[cat])
-		})
+			Object.assign(applicableProps, settings.categories[cat]);
+		});
 		let extraClasses: string[] = [];
 		if (applicableProps["opacity"]) {
 			// Ah, the glorious rounding problem.
 			if (applicableProps["opacity"] >= 80) {
-				extraClasses.push("hcevt-opa80")
+				extraClasses.push("hcevt-opa80");
 			} else if (applicableProps["opacity"] >= 70) {
-				extraClasses.push("hcevt-opa70")
+				extraClasses.push("hcevt-opa70");
 			} else if (applicableProps["opacity"] >= 60) {
-				extraClasses.push("hcevt-opa60")
+				extraClasses.push("hcevt-opa60");
 			} else if (applicableProps["opacity"] >= 50) {
-				extraClasses.push("hcevt-opa50")
+				extraClasses.push("hcevt-opa50");
 			} else if (applicableProps["opacity"] >= 40) {
-				extraClasses.push("hcevt-opa40")
+				extraClasses.push("hcevt-opa40");
 			} else if (applicableProps["opacity"] >= 30) {
-				extraClasses.push("hcevt-opa30")
+				extraClasses.push("hcevt-opa30");
 			} else if (applicableProps["opacity"] >= 20) {
-				extraClasses.push("hcevt-opa20")
+				extraClasses.push("hcevt-opa20");
 			} else {
-				extraClasses.push("hcevt-opa10")
+				extraClasses.push("hcevt-opa10");
 			}
 		}
 		if (applicableProps["strikethrough"]) {
-			extraClasses.push("hcevt-strikethrough")
+			extraClasses.push("hcevt-strikethrough");
 		}
 
 		return {
@@ -196,7 +240,7 @@ export class HCEvent {
 			classNames: extraClasses,
 			// REVIEW: are you sure fullcal doesn't have a boolean property for cancelled, itself? // Indeed, verily, it does not.
 			//   I wonder if we should make that a first-class property that's known to us -- 'evtCancelled: boolean' in frontmatter -- but the only reason i can think to do that is for a community schelling point.  and I can't think of any reason a well-discussed convention of "cancelled" as a category name can't do just about the same.  // hotkeys, maybe?
-		}
+		};
 	}
 
 	// Mutate (!) the given object to contain our data.
@@ -231,70 +275,100 @@ export class HCEvent {
 				case "endDate":
 					// Skip storing this, even if it exists, if it's the same as the start date.
 					if (!this.endDate.valueStructured) {
-						return
+						return;
 					}
-					if (this.evtDate.valueStructured.year == this.endDate.valueStructured.year
-						&& this.evtDate.valueStructured.month == this.endDate.valueStructured.month
-						&& this.evtDate.valueStructured.day == this.endDate.valueStructured.day) {
-						return
+					if (
+						this.evtDate.valueStructured.year ==
+							this.endDate.valueStructured.year &&
+						this.evtDate.valueStructured.month ==
+							this.endDate.valueStructured.month &&
+						this.evtDate.valueStructured.day ==
+							this.endDate.valueStructured.day
+					) {
+						return;
 					}
 					break;
 			}
 
 			// For everyone that got here: yep, be saved.
 			if (control.isValid) {
-				fm[control.name] = control.valuePrimitive
+				fm[control.name] = control.valuePrimitive;
 			}
-		})
+		});
 
 		// Now copy over any remaining properties in the original.
 		// This is part of the dance to control property orders.
 		for (var prop in copy) {
 			if (!(prop in fm)) {
-				fm[prop] = copy[prop]
+				fm[prop] = copy[prop];
 			}
 		}
 	}
 }
 
 function validateDate(ymd: string): ValidationResult<string, DateTime> {
-	const fmt = "yyyy-MM-dd"
+	const fmt = "yyyy-MM-dd";
 	let parsed = DateTime.fromFormat(ymd, fmt);
 	if (parsed.invalidReason) {
-		return { error: new Error(parsed.invalidReason + ": " + parsed.invalidExplanation as string) }
+		return {
+			error: new Error(
+				(parsed.invalidReason +
+					": " +
+					parsed.invalidExplanation) as string,
+			),
+		};
 	}
 	return {
 		structured: parsed,
 		simplified: parsed.toFormat(fmt),
-	}
+	};
 }
 function validateTime(hhmm: string): ValidationResult<string, Duration> {
 	let parsed = DateTime.fromFormat(hhmm, "HH:mm");
 	if (parsed.invalidReason) {
-		return { error: Error(parsed.invalidReason + ": " + parsed.invalidExplanation as string) }
+		return {
+			error: Error(
+				(parsed.invalidReason +
+					": " +
+					parsed.invalidExplanation) as string,
+			),
+		};
 	}
 	return {
-		structured: Duration.fromObject({ hour: parsed.hour, minute: parsed.minute }),
+		structured: Duration.fromObject({
+			hour: parsed.hour,
+			minute: parsed.minute,
+		}),
 		simplified: parsed.toFormat("HH:mm"),
-	}
+	};
 }
 function validateTZ(namedZone: string): ValidationResult<string, string> {
 	if (IANAZone.isValidZone(namedZone)) {
-		return { structured: namedZone }
+		return { structured: namedZone };
 	}
-	return { error: new Error(`"${namedZone}" is not a known time zone identifier`) }
+	return {
+		error: new Error(`"${namedZone}" is not a known time zone identifier`),
+	};
 }
-function validateTZ_defaultLocal(namedZone: string | undefined): ValidationResult<string | undefined, string> {
+function validateTZ_defaultLocal(
+	namedZone: string | undefined,
+): ValidationResult<string | undefined, string> {
 	if (!namedZone) {
 		let zn = DateTime.local().zoneName;
-		return { structured: zn, simplified: zn }
+		return { structured: zn, simplified: zn };
 	}
-	return validateTZ(namedZone)
+	return validateTZ(namedZone);
 }
-function validateEvtCatList(prim: string[]): ValidationResult<string[], string[]> {
-	let cleanedPrim = prim.filter((s) => s.length > 1).map((s) => s.startsWith("#evt/") ? s : "#evt/" + s).sort().unique();
+function validateEvtCatList(
+	prim: string[],
+): ValidationResult<string[], string[]> {
+	let cleanedPrim = prim
+		.filter((s) => s.length > 1)
+		.map((s) => (s.startsWith("#evt/") ? s : "#evt/" + s))
+		.sort()
+		.unique();
 	let structured = cleanedPrim.map((s) => s.substring(5));
-	return { structured: structured, simplified: cleanedPrim }
+	return { structured: structured, simplified: cleanedPrim };
 }
 
 /*-------------------------------------------------------------*/
@@ -306,7 +380,7 @@ export class HCEventFilePath {
 			dirs: hcEvt.evtDate.valueStructured.toFormat("yyyy/MM/dd"),
 			fprefix: "evt-" + hcEvt.evtDate.valuePrimitive,
 			slug: slugify(hcEvt.title.valuePrimitive),
-		})
+		});
 	}
 
 	constructor(init?: Partial<HCEventFilePath>) {
@@ -318,17 +392,16 @@ export class HCEventFilePath {
 	slug: string;
 
 	get wholePath(): string {
-		return this.dirs + "/" + this.fprefix + "--" + this.slug + ".md"
+		return this.dirs + "/" + this.fprefix + "--" + this.slug + ".md";
 	}
-
 }
 
 function slugify(str: string): string {
 	return String(str)
-		.normalize('NFKD') // split accented characters into their base characters and diacritical marks
-		.replace(/[\u0300-\u036f]/g, '') // remove all the accents, which happen to be all in the \u03xx UNICODE block.
+		.normalize("NFKD") // split accented characters into their base characters and diacritical marks
+		.replace(/[\u0300-\u036f]/g, "") // remove all the accents, which happen to be all in the \u03xx UNICODE block.
 		.trim() // trim leading or trailing whitespace
-		.replace(/[^a-zA-Z0-9 -]/g, '') // remove non-alphanumeric characters
-		.replace(/\s+/g, '-') // replace spaces with hyphens
-		.replace(/-+/g, '-'); // remove consecutive hyphens
+		.replace(/[^a-zA-Z0-9 -]/g, "") // remove non-alphanumeric characters
+		.replace(/\s+/g, "-") // replace spaces with hyphens
+		.replace(/-+/g, "-"); // remove consecutive hyphens
 }

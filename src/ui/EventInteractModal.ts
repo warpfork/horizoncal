@@ -1,15 +1,9 @@
-
-import {
-	ButtonComponent,
-	Modal,
-	TFile,
-	ToggleComponent
-} from 'obsidian';
+import { ButtonComponent, Modal, TFile, ToggleComponent } from "obsidian";
 
 import { HCEvent } from "../data/data";
 import HorizonCalPlugin from "../main";
-import { EventEditModal } from './EventEditModal';
-import { openEventInEditor } from './openEditor';
+import { EventEditModal } from "./EventEditModal";
+import { openEventInEditor } from "./openEditor";
 
 // This is the first modal that pops up when you click or tap an _existing_ event.
 //
@@ -41,44 +35,58 @@ export class EventInteractModal extends Modal {
 		// TODO display: slightly more basic facts
 
 		contentEl.createDiv({ cls: "control-wide" }, (el) => {
-			new ButtonComponent(el).setButtonText("edit event")
+			new ButtonComponent(el)
+				.setButtonText("edit event")
 				.onClick((evt) => {
 					new EventEditModal(this.plugin, this.data).open();
 					this.close();
-				})
-		})
+				});
+		});
 		contentEl.createDiv({ cls: "control-wide" }, (el) => {
-			new ButtonComponent(el).setButtonText("open in markdown editor")
+			new ButtonComponent(el)
+				.setButtonText("open in markdown editor")
 				.onClick(async (evt) => {
-					let unlikelyError = await openEventInEditor(this.plugin, this.data);
+					let unlikelyError = await openEventInEditor(
+						this.plugin,
+						this.data,
+					);
 					if (unlikelyError) {
 						alert(unlikelyError.message);
 					}
 					this.close();
-				})
-		})
+				});
+		});
 		contentEl.createDiv({ cls: "control-wide" }, (el) => {
 			// A saftey togg toggle next to the delete button makes it so two clicks are required
 			// (without introducing yet another modal).  Debatable if this is the prettier way or not, but it does the trick.
 			let toggle = new ToggleComponent(el);
 			toggle.toggleEl.addClass("delete-safety");
-			let button = new ButtonComponent(el).setButtonText("delete event").setDisabled(true).setWarning()
+			let button = new ButtonComponent(el)
+				.setButtonText("delete event")
+				.setDisabled(true)
+				.setWarning()
 				.onClick((evt) => {
-					let file = this.app.vault.getAbstractFileByPath(this.data.loadedFrom!)
+					let file = this.app.vault.getAbstractFileByPath(
+						this.data.loadedFrom!,
+					);
 					if (!file || !(file instanceof TFile)) {
 						this.close();
-						return
+						return;
 					}
 					this.app.vault.delete(file);
 					this.close();
-				})
+				});
 			toggle.onChange((val: boolean) => {
 				button.setDisabled(!val);
-			})
-		})
+			});
+		});
 		contentEl.createDiv({ cls: "control-wide" }, (el) => {
-			new ButtonComponent(el).setIcon("back").setButtonText("cancel")
-				.onClick((evt) => { this.close(); })
-		})
+			new ButtonComponent(el)
+				.setIcon("back")
+				.setButtonText("cancel")
+				.onClick((evt) => {
+					this.close();
+				});
+		});
 	}
 }

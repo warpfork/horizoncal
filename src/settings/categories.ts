@@ -1,13 +1,11 @@
-
-import {
-	HexString,
-	Modal
-} from 'obsidian';
+import { HexString, Modal } from "obsidian";
 
 // (I don't understand why I have to put that `| undefined` in there, but if I don't,
 // typescript will happily let me index into the thing and it _assumes_ the key was present...
 // which lets one accidentally skip out on a whole bunch of checks that _will_ hurt at runtime.)
-export type EventCategorySettings = {[key: CategoryName]: EventCategoryProperties | undefined};
+export type EventCategorySettings = {
+	[key: CategoryName]: EventCategoryProperties | undefined;
+};
 
 export type CategoryName = string;
 
@@ -48,7 +46,7 @@ export type EventCategoryProperties = {
 	// But we can add classes that are munges of your category name, so you can use additional stylesheets
 	//  if you're really certain you want to be so bold.
 	// ... Oh, yeah, definitely. Turns out fullcal doesn't give us an option to do style strings.  Just classes.
-}
+};
 
 // This is a modal (rather than a settings tab) because we let you trigger it from the category selector, too.
 // (It's a terribly deep modal stack, if the user chooses to do that, but they can do it.)

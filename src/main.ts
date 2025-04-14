@@ -1,10 +1,11 @@
-import {
-	Plugin,
-	WorkspaceLeaf
-} from 'obsidian';
+import { Plugin, WorkspaceLeaf } from "obsidian";
 
-import { DEFAULT_SETTINGS, HorizonCalSettings, HorizonCalSettingsTab } from './settings/settings';
-import { HorizonCalView, VIEW_TYPE } from './ui/calendarview';
+import {
+	DEFAULT_SETTINGS,
+	HorizonCalSettings,
+	HorizonCalSettingsTab,
+} from "./settings/settings";
+import { HorizonCalView, VIEW_TYPE } from "./ui/calendarview";
 
 export default class HorizonCalPlugin extends Plugin {
 	settings: HorizonCalSettings;
@@ -17,29 +18,30 @@ export default class HorizonCalPlugin extends Plugin {
 		//
 		// The ribbon button can secretly be shift-clicked to force opening another new view on desktop.
 		// In order to make that possible on mobile, we add a command with equivalent behavior.
-		this.addRibbonIcon('calendar-glyph', 'Open Horizon Calendar', (evt: MouseEvent) => {
-			this._activateCalendarView(evt.shiftKey);
-		});
+		this.addRibbonIcon(
+			"calendar-glyph",
+			"Open Horizon Calendar",
+			(evt: MouseEvent) => {
+				this._activateCalendarView(evt.shiftKey);
+			},
+		);
 		this.addCommand({
-			id: 'hc-open-calendar',
-			name: 'Open Calendar View',
+			id: "hc-open-calendar",
+			name: "Open Calendar View",
 			callback: () => {
 				this._activateCalendarView(false);
-			}
+			},
 		});
 		this.addCommand({
-			id: 'hc-open-new-calendar',
-			name: 'Open New Calendar View',
+			id: "hc-open-new-calendar",
+			name: "Open New Calendar View",
 			callback: () => {
 				this._activateCalendarView(true);
-			}
+			},
 		});
 
 		// Views!  This is what I'm here for.
-		this.registerView(
-			VIEW_TYPE,
-			(leaf) => new HorizonCalView(this, leaf)
-		);
+		this.registerView(VIEW_TYPE, (leaf) => new HorizonCalView(this, leaf));
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new HorizonCalSettingsTab(this.app, this));
@@ -57,7 +59,11 @@ export default class HorizonCalPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData(),
+		);
 	}
 
 	async saveSettings() {
@@ -68,7 +74,6 @@ export default class HorizonCalPlugin extends Plugin {
 
 	async _activateCalendarView(forceNew: boolean) {
 		const { workspace } = this.app;
-
 
 		// Which leaf style to use... depends.
 		//  - On mobile, by default: we want to use the `rightSplit` if it's `WorkspaceMobileDrawer`.

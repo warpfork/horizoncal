@@ -4,12 +4,12 @@ import {
 	Setting,
 	TFile,
 	ToggleComponent,
-} from 'obsidian';
+} from "obsidian";
 
 import { HCEvent, HCEventFilePath } from "../data/data";
 import { Control } from "../data/datacontrol";
 import HorizonCalPlugin from "../main";
-import { openEventInEditor } from './openEditor';
+import { openEventInEditor } from "./openEditor";
 
 //
 // If the given HCEvent has its `loadedFrom` property set,
@@ -42,53 +42,63 @@ export class EventEditModal extends Modal {
 		}
 
 		// Alt-o means "okay".
-		this.scope.register(['Alt'], 'o', (evt: KeyboardEvent, ctx: KeymapContext) => {
-			this._onSubmit();
-		})
+		this.scope.register(
+			["Alt"],
+			"o",
+			(evt: KeyboardEvent, ctx: KeymapContext) => {
+				this._onSubmit();
+			},
+		);
 
 		let widgeteer = <TStructured>(params: {
 			// Consider it constrained that "TStructured as DateTime, when type=='date'".
 			// (I think that could be done with a sufficiently massive union type,
 			// but I'm not really sure it's worth it :))
 			// (... huh, ends up not mattering, because we successfully only handle raws here.  nice.)
-			prop: Control<string | undefined, TStructured>
-			name: string
-			desc?: string
-			type: "text" | "date" | "time" | "toggle"
+			prop: Control<string | undefined, TStructured>;
+			name: string;
+			desc?: string;
+			type: "text" | "date" | "time" | "toggle";
 		}) => {
-			let setting = new Setting(contentEl)
-			setting.setName(params.name)
+			let setting = new Setting(contentEl);
+			setting.setName(params.name);
 			switch (params.type) {
 				case "text":
-					setting.addText((comp) => comp
-						.setValue(params.prop.valuePrimitive!)
-						.onChange((value) => {
-							let err = params.prop.tryUpdate(value)
-							comp.inputEl.toggleClass("invalid", !!err)
-						}));
+					setting.addText((comp) =>
+						comp
+							.setValue(params.prop.valuePrimitive!)
+							.onChange((value) => {
+								let err = params.prop.tryUpdate(value);
+								comp.inputEl.toggleClass("invalid", !!err);
+							}),
+					);
 					break;
 				case "date":
-					setting.controlEl.createEl("input",
+					setting.controlEl.createEl(
+						"input",
 						// Unfortunate fact about date elements: they use the brower's locale for formatting.
 						// I don't know how to control that in electron.  I don't think it's possible.
 						// (I appreciate the user-choice _concept_ there, but in practice... system locale is a PITA to control and I don't think this plays out in the user's favor in reality.)
 						{ type: "date", value: params.prop.valuePrimitive },
 						(el) => {
-							el.addEventListener('change', () => {
-								let err = params.prop.tryUpdate(el.value)
-								el.toggleClass("invalid", !!err)
+							el.addEventListener("change", () => {
+								let err = params.prop.tryUpdate(el.value);
+								el.toggleClass("invalid", !!err);
 							});
-						});
+						},
+					);
 					break;
 				case "time":
-					setting.controlEl.createEl("input",
+					setting.controlEl.createEl(
+						"input",
 						{ type: "time", value: params.prop.valuePrimitive },
 						(el) => {
-							el.addEventListener('change', () => {
-								let err = params.prop.tryUpdate(el.value)
-								el.toggleClass("invalid", !!err)
+							el.addEventListener("change", () => {
+								let err = params.prop.tryUpdate(el.value);
+								el.toggleClass("invalid", !!err);
 							});
-						});
+						},
+					);
 					break;
 				case "toggle":
 					break;
@@ -104,13 +114,14 @@ export class EventEditModal extends Modal {
 		new Setting(contentEl)
 			.setName("categories!")
 			.addButton((btn) => {
-				btn.onClick(() => new CategorySelectModal(this).open())
-			}).controlEl.createEl("span", {}, (el) => {
+				btn.onClick(() => new CategorySelectModal(this).open());
+			})
+			.controlEl.createEl("span", {}, (el) => {
 				// TODO this needs style.  like, a lot.
 				el.setText(this.data.evtCat.valueStructured + "");
 				// Store it so it's mutable.  The CategorySelectModal will live-update it.
 				this.categoriesEl = el;
-			})
+			});
 
 		// FUTURE: we might wanna do some custom style around date and time things..
 		// The date related stuff should have reduced borders and margins between them.
@@ -150,20 +161,23 @@ export class EventEditModal extends Modal {
 		});
 
 		new Setting(contentEl)
-			.addButton(btn => {
+			.addButton((btn) => {
 				btn.setIcon("clipboard");
 				btn.setTooltip("Save and Edit");
 				btn.setClass("save");
 				btn.onClick(async () => {
 					await this._onSubmit();
-					let unlikelyError = await openEventInEditor(this.plugin, this.data);
+					let unlikelyError = await openEventInEditor(
+						this.plugin,
+						this.data,
+					);
 					if (unlikelyError) {
 						alert(unlikelyError.message);
 					}
 				});
 				return btn;
 			})
-			.addButton(btn => {
+			.addButton((btn) => {
 				btn.setIcon("checkmark");
 				btn.setTooltip("Save");
 				btn.setClass("save");
@@ -172,7 +186,7 @@ export class EventEditModal extends Modal {
 				});
 				return btn;
 			})
-			.addButton(btn => {
+			.addButton((btn) => {
 				btn.setIcon("cross");
 				btn.setTooltip("Cancel");
 				btn.setClass("cancel");
@@ -198,7 +212,9 @@ export class EventEditModal extends Modal {
 		// just to be on the safe side.
 		for (var i = 0; i < this.containerEl.children.length; i++) {
 			let child = this.containerEl.children[i];
-			if (child.hasClass("modal-bg")) { child.remove() }
+			if (child.hasClass("modal-bg")) {
+				child.remove();
+			}
 		}
 	}
 	async _onSubmit() {
@@ -208,44 +224,59 @@ export class EventEditModal extends Modal {
 		// This seems like a rare case of "alert is actually the right UX".
 		let error = this.data.validate();
 		if (error) {
-			alert(error)
-			return
+			alert(error);
+			return;
 		}
 
 		let file: TFile;
 		if (this.data.loadedFrom) {
-			let probFile = this.app.vault.getAbstractFileByPath(this.data.loadedFrom!)
+			let probFile = this.app.vault.getAbstractFileByPath(
+				this.data.loadedFrom!,
+			);
 			if (!probFile || !(probFile instanceof TFile)) {
-				alert("this was intended to be an edit dialog, but the original file disappeared!")
-				return
+				alert(
+					"this was intended to be an edit dialog, but the original file disappeared!",
+				);
+				return;
 			}
-			file = probFile
+			file = probFile;
 		} else {
 			let path = HCEventFilePath.fromEvent(this.data);
 			try {
 				// Wrapped in a `try` because it throws on "already exists", which is not a real problem.
 				// Might be worth inspecting the error and reacting better if it's something else,
 				// but the file creation attempt up next should return a meaningful error in most cases anyway.
-				await this.plugin.app.vault.createFolder(`${this.plugin.settings.prefixPath}/${path.dirs}`)
-			} catch { }
+				await this.plugin.app.vault.createFolder(
+					`${this.plugin.settings.prefixPath}/${path.dirs}`,
+				);
+			} catch {}
 			// FIXME: file-already-exists should be handled in a less awful way.
 			//  Right now, we balk, and don't do anything destructive (on disk nor in UI), but it doesn't offer good guidance.
 			try {
-				file = await this.app.vault.create(`${this.plugin.settings.prefixPath}/${path.wholePath}`, "")
+				file = await this.app.vault.create(
+					`${this.plugin.settings.prefixPath}/${path.wholePath}`,
+					"",
+				);
 			} catch (error) {
-				alert("Error: could not create new event file -- " + error
-					+ "\n\nPick a title for the event that's unique in its day!");
-				return
+				alert(
+					"Error: could not create new event file -- " +
+						error +
+						"\n\nPick a title for the event that's unique in its day!",
+				);
+				return;
 			}
 			this.data.loadedFrom = file.path;
 		}
 
-		await this.app.fileManager.processFrontMatter(file, (fileFm: any): void => {
-			this.data.foistFrontmatter(fileFm);
-			// Persistence?
-			// It's handled magically by processFrontMatter as soon as this callback returns:
-			//  it persists our mutations to the `fileFm` argument.
-		});
+		await this.app.fileManager.processFrontMatter(
+			file,
+			(fileFm: any): void => {
+				this.data.foistFrontmatter(fileFm);
+				// Persistence?
+				// It's handled magically by processFrontMatter as soon as this callback returns:
+				//  it persists our mutations to the `fileFm` argument.
+			},
+		);
 
 		// And we're done.  This modal can go away.
 		this.close();
@@ -266,7 +297,6 @@ export class EventEditModal extends Modal {
 	}
 }
 
-
 export class CategorySelectModal extends Modal {
 	constructor(parent: EventEditModal) {
 		super(parent.app);
@@ -275,13 +305,12 @@ export class CategorySelectModal extends Modal {
 
 	private parent: EventEditModal;
 
-
 	onOpen() {
 		this.containerEl.addClass("horizoncal");
-		this.containerEl.addClass("hc-category-selection-modal");  // Main purpose is CSS to shrink it a bit.
+		this.containerEl.addClass("hc-category-selection-modal"); // Main purpose is CSS to shrink it a bit.
 
 		// The set of options we'll render is the union of categories known in the config and anything previously here.
-		let options: string[] = []
+		let options: string[] = [];
 		options.push(...Object.keys(this.parent.plugin.settings.categories));
 		options.push(...this.parent.data.evtCat.valueStructured);
 		options.sort(); // TODO may want to flag these as originating from non-settings or not.  Visually.
@@ -290,10 +319,14 @@ export class CategorySelectModal extends Modal {
 		// Someday todo: i'd probably like to have the arrow keys, and pgup/pgdown, move the nav focus too.
 
 		// Alt-o means "okay".
-		this.scope.register(['Alt'], 'o', (evt: KeyboardEvent, ctx: KeymapContext) => {
-			// No additional persistence efforts required in this one.  It's accumulating in-memory mutations.
-			this.close();
-		})
+		this.scope.register(
+			["Alt"],
+			"o",
+			(evt: KeyboardEvent, ctx: KeymapContext) => {
+				// No additional persistence efforts required in this one.  It's accumulating in-memory mutations.
+				this.close();
+			},
+		);
 
 		this.contentEl.createEl("ul", {}, (el) => {
 			options.forEach((row) => {
@@ -301,21 +334,29 @@ export class CategorySelectModal extends Modal {
 					new Setting(el)
 						.setName(row)
 						.addToggle((tog: ToggleComponent) => {
-							tog.setValue(this.parent.data.evtCat.valueStructured.contains(row));
+							tog.setValue(
+								this.parent.data.evtCat.valueStructured.contains(
+									row,
+								),
+							);
 							tog.onChange((on: boolean) => {
-								let prev = this.parent.data.evtCat.valuePrimitive
-								let next = [...prev]
+								let prev =
+									this.parent.data.evtCat.valuePrimitive;
+								let next = [...prev];
 								if (on) {
-									next.push("#evt/" + row)
+									next.push("#evt/" + row);
 								} else {
-									next.remove("#evt/" + row)
+									next.remove("#evt/" + row);
 								}
-								this.parent.data.evtCat.update(next)
-								this.parent.categoriesEl.setText(this.parent.data.evtCat.valueStructured + ""); // TODO: make a more coherent element here, with an update method.
+								this.parent.data.evtCat.update(next);
+								this.parent.categoriesEl.setText(
+									this.parent.data.evtCat.valueStructured +
+										"",
+								); // TODO: make a more coherent element here, with an update method.
 							});
-						})
-				})
-			})
-		})
+						});
+				});
+			});
+		});
 	}
 }

@@ -1,12 +1,7 @@
-import {
-	TAbstractFile,
-	TFile,
-	TFolder,
-	Vault,
-} from 'obsidian';
+import { TAbstractFile, TFile, TFolder, Vault } from "obsidian";
 
-import { DateTime, Interval } from 'luxon';
-import HorizonCalPlugin from 'src/main';
+import { DateTime, Interval } from "luxon";
+import HorizonCalPlugin from "src/main";
 import { HCEvent } from "./data";
 
 // Load events for the given time range.
@@ -26,38 +21,46 @@ import { HCEvent } from "./data";
 // This function returns no errors because it will instead log any data validation and parsing errors back to the
 // file that contained the strange data, as a property in its frontmatter.
 // Events with such errors are not included in the result.
-export function loadRange(plugin: HorizonCalPlugin, start: DateTime, end: DateTime, pre = 1, post = 1): HCEvent[] {
-	start = start.minus({days: pre})
-	end = end.plus({days: post})
+export function loadRange(
+	plugin: HorizonCalPlugin,
+	start: DateTime,
+	end: DateTime,
+	pre = 1,
+	post = 1,
+): HCEvent[] {
+	start = start.minus({ days: pre });
+	end = end.plus({ days: post });
 
 	// Get all the filenames that are of interest.
 	// Perhaps surprisingly, this is... not particularly recursive.
 	// The easiest way to go about it is to just ask about the existence of a folder per date;
 	// only within that to we "recurse" (wherein we expect a depth of... one).
-	let range = Interval.fromDateTimes(start, end)
-	let files: TFile[] = []
-	range.splitBy({days: 1}).forEach((value) => {
-		let dateDir = plugin.app.vault.getAbstractFileByPath(`${plugin.settings.prefixPath}/${value.start!.toFormat("yyyy/MM/dd")}`)
+	let range = Interval.fromDateTimes(start, end);
+	let files: TFile[] = [];
+	range.splitBy({ days: 1 }).forEach((value) => {
+		let dateDir = plugin.app.vault.getAbstractFileByPath(
+			`${plugin.settings.prefixPath}/${value.start!.toFormat("yyyy/MM/dd")}`,
+		);
 		// At this point we'll have null if there's no dir for that date,
 		// or indeed if the entire horizoncal dir doesn't exist.
 		// That's... fine.  Then you have no data, eh?
 		// console.log("attempting load for", value.start!.toFormat("yyyy/MM/dd"), "got", dateDir)
-		if (!(dateDir instanceof TFolder)) return
+		if (!(dateDir instanceof TFolder)) return;
 		Vault.recurseChildren(dateDir, (child: TAbstractFile) => {
 			// Note that this *does* recurse, we just *expect* it to be depth one.
 			// It's harmless if goes deeper, though.
 			// The directory itself that's the root of the query also gets yielded, and we just ignore that as well.
-			if (!(child instanceof TFile)) return
+			if (!(child instanceof TFile)) return;
 			if (child.name.startsWith("evt-") && child.name.endsWith(".md")) {
-				files.push(child)
+				files.push(child);
 			}
-		})
-	})
+		});
+	});
 	//console.log(`got ${files.length} files for interval ${range.toFormat("yyyy/MM/dd")}:`, files)
 
 	// For each relevant file, get the frontmatter from the metadata cache,
 	// and if it's at all parsable, accumulate the parsed HCEvent.
-	let results: HCEvent[] = []
+	let results: HCEvent[] = [];
 	files.forEach((file: TFile) => {
 		// Use HCEvent to do a parse.
 		// An HCEvent is something you can produce unconditionally:
@@ -69,7 +72,7 @@ export function loadRange(plugin: HorizonCalPlugin, start: DateTime, end: DateTi
 			// This probaby shouldn't be too common.
 			// And if it does happen... well, okay.  Nothing we can do but ignore it.
 			console.log("file disappeared mid walk?", hcEvtOrErr);
-			return
+			return;
 		}
 		let hcEvt: HCEvent = hcEvtOrErr;
 
@@ -79,11 +82,11 @@ export function loadRange(plugin: HorizonCalPlugin, start: DateTime, end: DateTi
 		if (hcEvtValidityErr) {
 			// TODO use filemanager.processFrontMatter to write an "hcerror" field with message.
 			console.log("conversion error:", hcEvtValidityErr);
-			return
+			return;
 		}
 
 		// Accumulate!
-		results.push(hcEvt)
-	})
-	return results
+		results.push(hcEvt);
+	});
+	return results;
 }
