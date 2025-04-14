@@ -24,7 +24,7 @@ export async function openEventInEditor(
 	plugin: HorizonCalPlugin,
 	target: HCEvent | TFile | string,
 ): Promise<Error | undefined> {
-	let { workspace, vault } = plugin.app;
+	const { workspace, vault } = plugin.app;
 
 	// Reduce target to a string,
 	//  because we need one of those to search across existing editors.
@@ -129,7 +129,7 @@ export async function openEventInEditor(
 	if (target instanceof TFile) {
 		targetFile = target;
 	} else {
-		let file = vault.getAbstractFileByPath(targetString);
+		const file = vault.getAbstractFileByPath(targetString);
 		if (!file || !(file instanceof TFile)) {
 			return new Error(
 				`cannot open editor to path '${targetString}': not a file`,
