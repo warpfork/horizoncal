@@ -57,8 +57,8 @@ export class EventInteractModal extends Modal {
 				});
 		});
 		contentEl.createDiv({ cls: "control-wide" }, (el) => {
-			// A saftey togg toggle next to the delete button makes it so two clicks are required
-			// (without introducing yet another modal).  Debatable if this is the prettier way or not, but it does the trick.
+			// A safety toggle next to the delete button makes it so two clicks are required
+			//  (without introducing yet another modal).  I like the effect.
 			const toggle = new ToggleComponent(el);
 			toggle.toggleEl.addClass("delete-safety");
 			const button = new ButtonComponent(el)

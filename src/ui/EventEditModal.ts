@@ -58,7 +58,7 @@ export class EventEditModal extends Modal {
 			prop: Control<string | undefined, TStructured>;
 			name: string;
 			desc?: string;
-			type: "text" | "date" | "time" | "toggle";
+			type: "text" | "date" | "time"; // how about "toggle"?  Use the widgeteer_bool func for that (type params coordination got to me).
 		}) => {
 			const setting = new Setting(contentEl);
 			setting.setName(params.name);
@@ -76,7 +76,7 @@ export class EventEditModal extends Modal {
 				case "date":
 					setting.controlEl.createEl(
 						"input",
-						// Unfortunate fact about date elements: they use the brower's locale for formatting.
+						// Unfortunate fact about date elements: they use the browser's locale for formatting.
 						// I don't know how to control that in electron.  I don't think it's possible.
 						// (I appreciate the user-choice _concept_ there, but in practice... system locale is a PITA to control and I don't think this plays out in the user's favor in reality.)
 						{ type: "date", value: params.prop.valuePrimitive },
@@ -100,7 +100,28 @@ export class EventEditModal extends Modal {
 						},
 					);
 					break;
+			}
+		};
+		const widgeteer_bool = <TStructured>(params: {
+			// Consider it constrained that "TStructured as DateTime, when type=='date'".
+			// (I think that could be done with a sufficiently massive union type,
+			// but I'm not really sure it's worth it :))
+			// (... huh, ends up not mattering, because we successfully only handle raws here.  nice.)
+			prop: Control<boolean | undefined, TStructured>;
+			name: string;
+			desc?: string;
+			type: "toggle";
+		}) => {
+			const setting = new Setting(contentEl);
+			setting.setName(params.name);
+			switch (params.type) {
 				case "toggle":
+					new ToggleComponent(setting.controlEl)
+						.setValue(!!params.prop.valueRaw)
+						.onChange((val: boolean) => {
+							// Okay, we're defaulting this one to undef, but that choice probably should've been more of a parameter.
+							params.prop.update(val ? true : undefined);
+						});
 					break;
 			}
 		};
@@ -158,6 +179,15 @@ export class EventEditModal extends Modal {
 			prop: this.data.endTZ,
 			name: "Event End Timezone",
 			type: "text",
+		});
+
+		// And now the simple checkbox for AllDay mode.
+		//  If I was a more detail-oriented person about UI, perhaps I would make some of the above fields conditional on this,
+		//   but I think we'd start to want a more serious UI framework before starting to get clever like that.
+		widgeteer_bool({
+			prop: this.data.evtAllDay,
+			name: "All Day Event?",
+			type: "toggle",
 		});
 
 		new Setting(contentEl)
