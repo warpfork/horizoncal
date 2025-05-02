@@ -113,7 +113,7 @@ export class HCEvent {
 	//
 	// Note that there are still a few higher level validity rules not covered.
 	// For example, endTZ without an endTime is kinda silly.
-	// However, that exaple also isn't really worth checking because it's never something that deserves user action;
+	// However, that example also isn't really worth checking because it's never something that deserves user action;
 	// whether we elide that from serialization at the end is a choice local to serializing.
 	// There's also the small matter cross-field checks like "is the end actually after the beginning?" --
 	// those aren't currently validated either.
@@ -131,7 +131,7 @@ export class HCEvent {
 	}
 
 	title: Control<string, string>;
-	evtCat: Control<string[], string[]>; // Primitive strings use tag syntax with "#evt/foo"; parsed data is just "foo" bare, beacuse that's what we mostly render.  Optional primarily because prop editor makes it undefined when deleting last element.
+	evtCat: Control<string[], string[]>; // Primitive strings use tag syntax with "#evt/foo"; parsed data is just "foo" bare, because that's what we mostly render.  Optional primarily because prop editor makes it undefined when deleting last element.
 	evtDate: Control<string, DateTime>; // Only contains YMD components.
 	evtTime: ControlOptional<string, Duration>; // Only contains HHmm components.
 	evtTZ: Control<string | undefined, string>; // Named timezome.
@@ -181,9 +181,9 @@ export class HCEvent {
 	// _or_ it can be used to update existing events (with admittedly a bit of pain,
 	// since that requires plucking fields back out to bounce through `setProp` calls).
 	//
-	// This requires plugin settings as a parameter, beacuse color choices are determined
+	// This requires plugin settings as a parameter, because color choices are determined
 	// by the configuration for categories.
-	// (Changing plugin settings should generally be followed by a full refresh of FulLCalendar.)
+	// (Changing plugin settings should generally be followed by a full refresh of FullCalendar.)
 	toFCdata(settings: HorizonCalSettings): EventInput {
 		if (!this.loadedFrom) {
 			throw new Error("event will not have an ID");

@@ -30,7 +30,7 @@ They have different uses:
    and also any information you get from the DOM tends to be at this level;
 - "structured" data can be useful to keep in memory for rapid access.
 
-Validity is orthagonal to these levels.
+Validity is orthogonal to these levels.
 One can have primitive, but invalid, data.
 
 
@@ -115,7 +115,7 @@ So why bother with code complexity in the form of transforms back from structure
 // There are a variety of states where it can contain unlawful data;
 // we try to minimize those, but some can only be documented:
 //
-//  - When first constructed, the data is uninitalized, and thus contains several undefineds,
+//  - When first constructed, the data is uninitialized, and thus contains several undefineds,
 //     regardless of whether 'undefined' is a valid member of TPrimitive or TStructured.
 //     In this scenario, we have accesses to those values throw an error, rather than proceed.
 //  - When using the `updateFromUnknown` feature, it's possible to get data that doesn't satisfy
@@ -123,7 +123,7 @@ So why bother with code complexity in the form of transforms back from structure
 //  - When a validation func returns Error, it has the option to also still return a TStructured value;
 //     if it does so, we store it and make it accessible; if it doesn't, accesses to that value with throw errors.
 //
-// Overall, while Control does intentially store data without regard to the concept of "validity",
+// Overall, while Control does intentionally store data without regard to the concept of "validity",
 // Control does makes a considerable effort not to expose your program to unlawful data that doesn't confirm to Typescript's type hints.
 export class Control<TPrimitive, TStructured = TPrimitive> {
 	constructor(

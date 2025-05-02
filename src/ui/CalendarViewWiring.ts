@@ -226,7 +226,7 @@ export function makeCalendarChangeToVaultUpdateFunc(
 				// Stir our updated dates into the data.
 				// This roundtrips things through strings, which... may seem unnecessary?
 				// But on the other hand, that's what we really store, and being literal is good.
-				// (Also, I was too lazy to introudce a "setParsed" system to Control; it would require an alternative simplify func, and how we're building the whole magma burrito family; no.)
+				// (Also, I was too lazy to introudce a "setParsed" system to Control; it would require an alternative simplify func, and now we're building the whole magma burrito family; no.)
 				hcEvt.evtDate.update(newStartDt.toFormat("yyyy-MM-dd"));
 				hcEvt.evtTime.update(newStartDt.toFormat("HH:mm"));
 				hcEvt.endDate.update(newEndDt.toFormat("yyyy-MM-dd"));
@@ -260,7 +260,7 @@ export function makeCalendarChangeToVaultUpdateFunc(
 			// FIXME: filename collision handling needs a better definition.
 			//  Right now, we _already updated_ the frontmatter in the file (and that's a different filesystem atomicity phase),
 			//  so we can end up with the filename not being in sync.
-			//  This is surprisingly non-catestrophic (as in, doesn't instantly destroy user data or break the UI),
+			//  This is surprisingly non-catastrophic (as in, doesn't instantly destroy user data or break the UI),
 			//    as long as we still keep editing the original path...
 			//  But it's still not _good_, because it means when reopening the calendar,
 			//    the event might not get loaded if its old path was for a day that's not in view.
