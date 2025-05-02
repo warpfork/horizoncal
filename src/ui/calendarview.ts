@@ -257,6 +257,9 @@ export class HorizonCalView extends ItemView {
 			selectable: true, // Enables the select callback and related UI.
 			selectMinDistance: 5, // Default is 0px, very silly!
 
+			// Make drag of events to allDay be remotely sane.
+			allDayMaintainDuration: true, // Otherwise the default is to simply discard their end date!
+
 			// Hooks for interactions:
 			select: (info: DateSelectArg) => {
 				const startDt = toLuxonDateTime(info.start, this.calUI);

@@ -136,6 +136,14 @@ export function registerVaultChangesToCalendarUpdates(
 							fcEvt.setEnd(newData[prop]!);
 							continue;
 						}
+						if (prop == "allDay") {
+							// This is _doubly_ cursed, because when it's true, the event forget its end.
+							// So... set end again after this, in case we've just set it to false, but the end prop was earlier in our iteration through props.
+							// This part of the FC API does not spark joy.
+							fcEvt.setAllDay(newData[prop]!);
+							fcEvt.setEnd(newData["end"]!);
+							continue;
+						}
 						fcEvt.setProp(prop, newData[prop]);
 					}
 				}
@@ -212,6 +220,7 @@ export function makeCalendarChangeToVaultUpdateFunc(
 				// Shift the dates we got from fullcalendar back into the timezones this event specified.
 				//  Fullcalendar doesn't retain timezones -- it flattens everything to an offset only (because javascript Date forces that),
 				//   and it also shifts everything to the calendar-wide tz offset.  This is quite far from what we want.
+				//  Also: be warned that if you didn't set 'allDayMaintainDuration: true' in the calendar's global settings, you can receive end dates of "null" when an event transitions to allDay.
 				const newStartDt = toLuxonDateTime(
 					info.event.start as Date,
 					info.view.calendar,
@@ -231,6 +240,7 @@ export function makeCalendarChangeToVaultUpdateFunc(
 				hcEvt.evtTime.update(newStartDt.toFormat("HH:mm"));
 				hcEvt.endDate.update(newEndDt.toFormat("yyyy-MM-dd"));
 				hcEvt.endTime.update(newEndDt.toFormat("HH:mm"));
+				hcEvt.evtAllDay.update(info.event.allDay ? true : undefined);
 
 				// Now foist the event structure back into frontmatter form... mutating the object we started with.
 				hcEvt.foistFrontmatter(fileFm);

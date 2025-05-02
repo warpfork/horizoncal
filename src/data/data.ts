@@ -8,6 +8,8 @@ import {
 	unknownToStringCoercive,
 	unknownToStringListCoercive,
 	validateString,
+	validateBoolean,
+	unknownToBooleanCoercive,
 } from "./datacontrol";
 
 import { EventInput } from "@fullcalendar/core";
@@ -68,6 +70,11 @@ export class HCEvent {
 			validateTZ,
 			unknownToStringCoercive,
 		).updateFromUnknown(fm, "endTZ");
+		v.evtAllDay = new Control(
+			"evtAllDay",
+			validateBoolean,
+			unknownToBooleanCoercive,
+		).updateFromUnknown(fm, "evtAllDay");
 		return v;
 	}
 
@@ -138,6 +145,7 @@ export class HCEvent {
 	endDate: ControlOptional<string, DateTime>;
 	endTime: ControlOptional<string, Duration>;
 	endTZ: ControlOptional<string, string>;
+	evtAllDay: Control<boolean | undefined, boolean>;
 
 	// Optionally, a record of the path this was loaded from.  (Doesn't mean it's where this *should* be stored!)
 	// (It's tempting to store a whole TFile here for convenience, but I think it's better to take a trip through the vault API each time to reduce the range of time you might be holding invalid beliefs about the filesystem state.)
@@ -153,6 +161,7 @@ export class HCEvent {
 			this.endDate,
 			this.endTime,
 			this.endTZ,
+			this.evtAllDay,
 		];
 	}
 
@@ -233,6 +242,7 @@ export class HCEvent {
 			// (We'll diligently re-attach and persist TZ data every time we get any info back from FC.)
 			start: this.getCompleteStartDt().toISO() as string,
 			end: this.getCompleteEndDt().toISO() as string,
+			allDay: this.evtAllDay.valueStructured,
 			color: applicableProps.color,
 			// backgroundColor:
 			// borderColor:
@@ -268,7 +278,7 @@ export class HCEvent {
 		//
 		// Two corners are currently rounded off, here:
 		//  - Quietly forgetting about those bools we didn't migrate to Control yet.  Not sure if keeping them at all.
-		//  - Haven't handled any of the optionality of times for all-day events.
+		//  - Haven't handled any of the optionality of times for all-day events.  // Now a real TODO since we support allDay.
 		this.allControls().forEach((control) => {
 			// Handle the special cases where the value doesn't get persisted.
 			switch (control.name) {

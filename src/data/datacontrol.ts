@@ -75,6 +75,17 @@ So why bother with code complexity in the form of transforms back from structure
 
 */
 
+/*
+About Obsidian frontmatter in particular
+========================================
+
+Can we have booleans?  Yes!
+For the UI's purposes, your tag just needs to be of the "checkmark" type.
+(Or, you have to edit in source mode.)
+(Using the properties editor and typing in "true" naively may result in you getting... well, a string.)
+
+*/
+
 // Control stores a value and associates it with validation functions.
 // Optionally, it also caches a parsed, reified form of the value.
 //
@@ -357,6 +368,12 @@ export function validationOptional<TPrimitive, TStructured>(
 	};
 }
 
+export function validateBoolean(
+	x: boolean,
+): ValidationResult<boolean, boolean> {
+	return { structured: x };
+}
+
 export function validateString(x: string): ValidationResult<string, string> {
 	return { structured: x };
 }
@@ -379,6 +396,17 @@ export function unknownAllowingUndefined<TPrimitive>(
 		}
 		return fn(x);
 	};
+}
+
+export function unknownToBoolean(x: unknown): boolean | Error {
+	if (typeof x === "boolean") {
+		return x;
+	}
+	return new Error(`expected a boolean`);
+}
+
+export function unknownToBooleanCoercive(x: unknown): boolean {
+	return !!x;
 }
 
 export function unknownToString(x: unknown): string | Error {
