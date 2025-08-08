@@ -1,22 +1,12 @@
-# vscode
-.vscode 
+# npm
+/node_modules
 
-# Intellij
+# Our build outputs.
+# (Symlink this to `.obsidian/plugins/horizoncal` in your vault, and add a `.hotreload` file there, for fun dev experiences!)
+/out
+
+# Every dumb editor that's commonly known and has bad opinions.
+.DS_Store
 *.iml
 .idea
-
-# npm
-node_modules
-
-# Don't include the compiled main.js file in the repo.
-# They should be uploaded to GitHub releases instead.
-main.js
-
-# Exclude sourcemaps
-*.map
-
-# obsidian
-data.json
-
-# Exclude macOS Finder (System Explorer) View States
-.DS_Store
+.vscode

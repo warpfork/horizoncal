@@ -1,6 +1,7 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
+import esBuildCopyStaticFiles from "esbuild-copy-static-files";
 
 const prod = process.argv[2] === "production";
 
@@ -25,12 +26,29 @@ const context = await esbuild.context({
 		// "luxon", // i don't really know why we can't use the environmental one, but, this is loadbearing.
 		...builtins,
 	],
+	plugins: [
+		esBuildCopyStaticFiles({
+			src: "./src/styles/styles.css",
+			dest: "./out/styles.css",
+			dereference: true,
+			errorOnExist: false,
+			preserveTimestamps: true,
+		}),
+		esBuildCopyStaticFiles({
+			src: "./manifest.json",
+			dest: "./out/manifest.json",
+			dereference: true,
+			errorOnExist: false,
+			preserveTimestamps: true,
+		}),
+	],
 	format: "cjs",
 	target: "es2021",
 	logLevel: "info",
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
-	outfile: "main.js",
+	outfile: "out/main.js",
+	minify: prod,
 });
 
 if (prod) {
