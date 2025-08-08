@@ -407,11 +407,10 @@ export class HCEventFilePath {
 }
 
 function slugify(str: string): string {
-	return String(str)
+	return String('-'+str+'-')
 		.normalize("NFKD") // split accented characters into their base characters and diacritical marks
 		.replace(/[\u0300-\u036f]/g, "") // remove all the accents, which happen to be all in the \u03xx UNICODE block.
-		.trim() // trim leading or trailing whitespace
-		.replace(/[^a-zA-Z0-9 -]/g, "") // remove non-alphanumeric characters
-		.replace(/\s+/g, "-") // replace spaces with hyphens
-		.replace(/-+/g, "-"); // remove consecutive hyphens
+		.replace(/[^a-zA-Z0-9-]/g, "-") // convert all non-alphanumeric characters to hyphens
+		.replace(/-+/g, "-") // collapse consecutive hyphens
+		.slice(1, -1) // discard leading and trailing hyphen(s)
 }
