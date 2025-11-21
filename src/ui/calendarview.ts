@@ -1,8 +1,8 @@
 import { ButtonComponent, ItemView, Menu, WorkspaceLeaf } from "obsidian";
 
 import * as fc from "@fullcalendar/core";
+import * as fci from "@fullcalendar/interaction";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import timeGridPlugin from "@fullcalendar/timegrid";
 
@@ -199,7 +199,7 @@ export class HorizonCalView extends ItemView {
 				dayGridPlugin,
 				timeGridPlugin,
 				listPlugin,
-				interactionPlugin,
+				fci.default,
 				// System glue plugins
 				luxonPlugin,
 			],
@@ -226,6 +226,7 @@ export class HorizonCalView extends ItemView {
 					duration: { days: 4 },
 					dateIncrement: { days: 1 },
 					slotEventOverlap: false,
+					// dateClick: (arg: fci.DateClickArg) => {}, // Not what you want.  Captures any click on the whole time range of the day, and NOT on the date header of the column.
 				},
 				timeGrid14Day: {
 					type: "timeGrid",
