@@ -216,14 +216,25 @@ export class HorizonCalView extends ItemView {
 				left: "",
 			},
 			views: {
+				month: {
+					weekNumbers: true,
+				},
+				week: {
+					weekNumbers: true,
+				},
+				list: {
+					weekNumbers: true, // no apparent effect.
+				},
 				timeGridFourDay: {
 					type: "timeGrid",
+					weekNumbers: true,
 					duration: { days: 4 },
 					dateIncrement: { days: 1 },
 					slotEventOverlap: false,
 				},
 				timeGrid14Day: {
 					type: "timeGrid",
+					weekNumbers: true,
 					duration: { days: 14 },
 					dateIncrement: { days: 1 },
 					slotEventOverlap: false,
