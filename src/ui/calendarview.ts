@@ -1,11 +1,6 @@
 import { ButtonComponent, ItemView, Menu, WorkspaceLeaf } from "obsidian";
 
-import {
-	Calendar,
-	DateRangeInput,
-	DateSelectArg,
-	EventClickArg,
-} from "@fullcalendar/core";
+import * as fc from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
@@ -49,7 +44,7 @@ export class HorizonCalView extends ItemView {
 	uniq: number; // Not structural.  Using this for sanitycheck during dev.
 	viewContentEl: Element; // Reference grabbed during onOpen.
 	calUIEl: HTMLElement; // Div created during onOpen to be fullcal's root.
-	calUI: Calendar; // Fullcal's primary control object.
+	calUI: fc.Calendar; // Fullcal's primary control object.
 
 	async onOpen() {
 		// The first element in containerEl is obsidian's own header.
@@ -96,7 +91,7 @@ export class HorizonCalView extends ItemView {
 					.setButtonText("<+")
 					.setTooltip("expand view into past")
 					.onClick(() => {
-						const newRange: DateRangeInput = {
+						const newRange: fc.DateRangeInput = {
 							start: toLuxonDateTime(
 								this.calUI.view.currentStart,
 								this.calUI,
@@ -112,7 +107,7 @@ export class HorizonCalView extends ItemView {
 					.setButtonText("+>")
 					.setTooltip("expand view into future")
 					.onClick(() => {
-						const newRange: DateRangeInput = {
+						const newRange: fc.DateRangeInput = {
 							start: this.calUI.view.currentStart,
 							end: toLuxonDateTime(
 								this.calUI.view.currentEnd,
@@ -198,7 +193,7 @@ export class HorizonCalView extends ItemView {
 		//
 		// We don't call the first `render()` until all these callbacks are wired.
 		const changeHook = makeCalendarChangeToVaultUpdateFunc(this.plugin);
-		this.calUI = new Calendar(this.calUIEl, {
+		this.calUI = new fc.Calendar(this.calUIEl, {
 			plugins: [
 				// View plugins
 				dayGridPlugin,
@@ -272,7 +267,7 @@ export class HorizonCalView extends ItemView {
 			allDayMaintainDuration: true, // Otherwise the default is to simply discard their end date!
 
 			// Hooks for interactions:
-			select: (info: DateSelectArg) => {
+			select: (info: fc.DateSelectArg) => {
 				const startDt = toLuxonDateTime(info.start, this.calUI);
 				const endDt = toLuxonDateTime(info.end, this.calUI);
 
@@ -291,7 +286,7 @@ export class HorizonCalView extends ItemView {
 					}),
 				).open();
 			},
-			eventClick: (info: EventClickArg) => {
+			eventClick: (info: fc.EventClickArg) => {
 				console.log(`clicked '${info.event.id}'`, info);
 				// This hook works by... fully reloading the file assumed to back the event.
 				// This works fine for HC-native events, but will be much less fine if we add other event sources.
