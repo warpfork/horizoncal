@@ -23,6 +23,9 @@ export function makeEventSourceFunc(
 			plugin,
 			toLuxonDateTime(info.start, cal),
 			toLuxonDateTime(info.end, cal),
+			30, // Look 30 days pre.  This is excessive, but
+			// we don't get any info here about if we're in month view, or... what.
+			// So I'd rather cast a wider net than necessary, than fail to show something.
 		);
 		const fcEvts = hcEvts.map(
 			(hcEvt): EventInput => hcEvt.toFCdata(plugin.settings),
