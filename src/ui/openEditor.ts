@@ -95,7 +95,7 @@ export async function openEventInEditor(
 		//       Even if all you want to do is immediately navigate away.
 		//       (This shows up in the tab's history nav, also!  Not just the first page, but the WHOLE history stack!)
 		//      Oh, and 'duplicateLeaf' returns a promise, unlike most of the neighbors which are synchronous.
-		//       (I assume that's beacuse spawning a whole view inside it may be async?  Unclear.)
+		//       (I assume that's because spawning a whole view inside it may be async?  Unclear.)
 		//      Oh, AND, lol, the leaf parameter isn't actually for where to orient.  It's for what to copy.
 		//       This thing still opens relative to the active leaf.  Sheesh.
 		//  - `createLeafBySplit` offers slightly different options --
@@ -119,11 +119,11 @@ export async function openEventInEditor(
 	} else {
 		// If there are no other relevant leaves already open: we're going to make a new split for you.
 		// Since my typical usage is timegrid, ditching vertical space is fine (but losing width would cause a jarring repaint),
-		// so we'll use a "horizonal" split (horizonal refers to the line that will appear, apparently).
+		// so we'll use a "horizontal" split (horizontal refers to the line that will appear, apparently).
 		targetLeaf = workspace.getLeaf("split", "horizontal");
 	}
 
-	// Lastly, to actually open an edtior, we need a TFile, instead of a string.
+	// Lastly, to actually open an editor, we need a TFile, instead of a string.
 	// (This dance seems somewhat silly to me, because it's very TOCTOU, but, whatever.)
 	let targetFile: TFile;
 	if (target instanceof TFile) {

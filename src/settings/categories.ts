@@ -28,7 +28,7 @@ export type EventCategoryProperties = {
 	// An effect priority can be set to disambiguate which category gets its styling applied when an event has several.
 	//
 	// For example, an "urgent" event getting its red styling applied is probably more important
-	// than any other categories that event might also ahve.
+	// than any other categories that event might also have.
 	//
 	// A higher number gets higher precedence.
 	effectPriority?: number;
@@ -36,7 +36,7 @@ export type EventCategoryProperties = {
 	// A strikethrough style can be applied to the event's text.
 	// This may be useful for an event category that means cancelled, for example.
 	//
-	// (Protip: you can create just one "cancelled" cateogory, rather than,
+	// (Protip: you can create just one "cancelled" category, rather than,
 	// for example, "travel-cancelled" and "meeting-cancelled" and so on --
 	// categories stack, so having something "travel" and "cancelled" will
 	// result in an event with travel's colors and cancelled's strikethrough!)

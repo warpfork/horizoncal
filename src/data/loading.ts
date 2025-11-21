@@ -13,10 +13,10 @@ import { HCEvent } from "./data";
 //     that may be a different TZ than the calendar you're about to render,
 //      which means you should almost always add a day to either side of your loading range.
 //  - this doesn't take any special account of multi-day events --
-//     so, to include the possibilty of those, you may want to stretch the 'pre' range *considerably* wide indeed.
+//     so, to include the possibility of those, you may want to stretch the 'pre' range *considerably* wide indeed.
 //
 // A reference to the complete HorizonCalPlugin is taken because it provides access to the app and vault references,
-// and also beacuse we need the prefix path settings values.
+// and also because we need the prefix path settings values.
 //
 // This function returns no errors because it will instead log any data validation and parsing errors back to the
 // file that contained the strange data, as a property in its frontmatter.
@@ -69,7 +69,7 @@ export function loadRange(
 		// we really do expect the frontmatter in these files to be fairly valid.
 		const hcEvtOrErr = HCEvent.fromFile(plugin.app, file);
 		if (hcEvtOrErr instanceof Error) {
-			// This probaby shouldn't be too common.
+			// This probably shouldn't be too common.
 			// And if it does happen... well, okay.  Nothing we can do but ignore it.
 			console.log("file disappeared mid walk?", hcEvtOrErr);
 			return;
