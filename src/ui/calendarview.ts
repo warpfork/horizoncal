@@ -3,6 +3,7 @@ import { ButtonComponent, ItemView, Menu, WorkspaceLeaf } from "obsidian";
 import * as fc from "@fullcalendar/core";
 import * as fci from "@fullcalendar/interaction";
 import dayGridPlugin from "@fullcalendar/daygrid";
+import multiMonthPlugin from "@fullcalendar/multimonth";
 import listPlugin from "@fullcalendar/list";
 import timeGridPlugin from "@fullcalendar/timegrid";
 
@@ -199,6 +200,7 @@ export class HorizonCalView extends ItemView {
 				dayGridPlugin,
 				timeGridPlugin,
 				listPlugin,
+				multiMonthPlugin,
 				fci.default,
 				// System glue plugins
 				luxonPlugin,
@@ -207,36 +209,61 @@ export class HorizonCalView extends ItemView {
 			headerToolbar: {
 				right: "prev,next today",
 				// future work: additional nav buttons of our own that manage via 'gotoDate' and 'visibleRange'.
-				center: "dayGridMonth,timeGridWeek,listWeek timeGridFourDay,timeGrid14Day",
+				center: "dayGridYear,dayGridMonth,monthAll,multiMonthYear,timeGridWeek timeGridFourDay,timeGrid14Day",
+				// There are many other default views.  For example, "listWeek".  I don't find it inspiring, though.
 				left: "",
 			},
+			// lazyFetching: false, // empirically unnecessary, given our viewDidMount hook.
+			// And we need the viewDidMount hook to force `refetchEvents`, because otherwise switching to smaller view ranges tends not to cause a new fetch.
+			// ... this is driving me to derangement.
+			// This is only called when it switches view *types*.  Not when it switches views.
+			// So if I try to have two different things of type dayGridMonth, then whichever of them is switched to... has effects that last if you then switch to the other.
+			// dayGridYear and dayGridMonth are also the same view type, for this purpose.
+			// I don't know what to say at this point except this is an incredibly deranged series of APIs and if I had an alternative to this library, I would take it.
+			//
+			// My best remaining guess for how to get a grip of all this is that we have to stop using the built-in toolbar entirely and replace those buttons so we can hook their behavior to do sane things.
+			viewDidMount: (arg: fc.ViewMountArg) => {
+				console.log("viewDidMount called.", arg);
+				// This also wastes so much work that it thonks for a perceptable moment (~100ms?) on my desktop.  Sheesh.
+				arg.view.calendar.removeAllEvents();
+				arg.view.calendar.refetchEvents();
+
+				// evt.display = "none"; // TODO: this might be a better option.
+				// Set it back to "auto" when done.
+			},
 			views: {
-				month: {
-					weekNumbers: true,
+				dayGridMonth: {
+					// how filter plz.
+					// it's definitely NOT at the eventSource level, because FC is smart enough to not be asking that again on view switch.
+					// ... well, kind of.  if you switch to a smaller view, it's calm.
+					// if you actually move around with that view, once it goes forward very far, it apparently drops memory.
+					// which makes the whole thing seem rather pointless.
 				},
-				week: {
-					weekNumbers: true,
-				},
-				list: {
-					weekNumbers: true, // no apparent effect.
+				monthAll: {
+					type: "dayGridMonth",
+					buttonText: "month (all)",
 				},
 				timeGridFourDay: {
 					type: "timeGrid",
-					weekNumbers: true,
 					duration: { days: 4 },
 					dateIncrement: { days: 1 },
 					slotEventOverlap: false,
 					// dateClick: (arg: fci.DateClickArg) => {}, // Not what you want.  Captures any click on the whole time range of the day, and NOT on the date header of the column.
+					// eventConstraint,
+					// eventDisplay: "what",
+					// footerToolbar: { center: "hello" },
+					// headerToolbar: false,
+					// moreLinkClick // idk but no.
 				},
 				timeGrid14Day: {
 					type: "timeGrid",
-					weekNumbers: true,
 					duration: { days: 14 },
 					dateIncrement: { days: 1 },
 					slotEventOverlap: false,
 				},
 			},
 			nowIndicator: true,
+			weekNumbers: true,
 			// scrollTime: // probably ought to be set so "now" is in it, yo...
 			// the 'scrollToTime' method might also be the right thing.
 			scrollTimeReset: false,
@@ -303,6 +330,31 @@ export class HorizonCalView extends ItemView {
 			},
 			eventDrop: changeHook,
 			eventResize: changeHook,
+
+			// And enable a few more links to do stuff:
+			navLinks: true,
+			navLinkDayClick: (date: Date, jsEvent: UIEvent) => {
+				// THIS IS WHAT I WANTED.
+				if (this.calUI.view.type == "dayGridMonth") {
+					this.calUI.changeView("timeGridFourDay", {
+						// this argument seems to do nothing in practice, so we gotoDate right after this.
+						start: date,
+						end: date,
+					});
+					this.calUI.gotoDate(date);
+				} else {
+					// TODO: navigate to daily note file.
+				}
+			},
+			navLinkWeekClick: (date: Date, jsEvent: UIEvent) => {
+				alert("week zow"); // works on dayGridMonth; doesn't work on the timegrid views sadly.
+				// TODO: navigate to week note file.
+			},
+			navLinkHint: (...args: any[]): string => {
+				// Poorly documented and typed, but args 0 is a string, and args 1 is the date object.
+				// Unfortunately, this is fairly useless because there's no way to see it on mobile.
+				return "wow " + JSON.stringify(args);
+			},
 		});
 		this.calUI.addEventSource({
 			id: "horizoncal", // providing an ID makes it easy to add new events later and attach them to this source (which turns out to be essential for ID-based dedup).

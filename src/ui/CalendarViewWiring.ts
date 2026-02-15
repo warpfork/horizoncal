@@ -19,7 +19,8 @@ export function makeEventSourceFunc(
 	cal: CalendarApi,
 ): EventSourceFunc {
 	return (info: EventSourceFuncArg): Promise<EventInput[]> => {
-		const hcEvts = loadRange(
+		console.log("LOADING EVENTS.", info);
+		let hcEvts = loadRange(
 			plugin,
 			toLuxonDateTime(info.start, cal),
 			toLuxonDateTime(info.end, cal),
@@ -27,9 +28,35 @@ export function makeEventSourceFunc(
 			// we don't get any info here about if we're in month view, or... what.
 			// So I'd rather cast a wider net than necessary, than fail to show something.
 		);
+		if (cal.view.type == "dayGridMonth") {
+			hcEvts = hcEvts.filter((hcEvt): boolean => {
+				if (hcEvt.evtAllDay.valuePrimitive) {
+					return true;
+				}
+				for (const cat of [
+					"travel",
+					"meeting",
+					"event",
+					"external",
+					"social-committed",
+					"todo",
+					"visitor",
+					"due",
+					"epic",
+				]) {
+					if (hcEvt.evtCat.valueStructured.contains(cat)) {
+						return true;
+					}
+				}
+				return false;
+			});
+		}
 		const fcEvts = hcEvts.map(
 			(hcEvt): EventInput => hcEvt.toFCdata(plugin.settings),
 		);
+		fcEvts.forEach((evt) => {
+			evt.display = "block"; // In month/year views, I don't want none of that dot stuff for major events.
+		});
 		return Promise.resolve(fcEvts);
 	};
 }

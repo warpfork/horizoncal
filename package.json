@@ -29,6 +29,7 @@
 		"@fullcalendar/core": "^6.1.10",
 		"@fullcalendar/interaction": "^6.1.10",
 		"@fullcalendar/list": "^6.1.10",
+		"@fullcalendar/multimonth": "^6.1.19",
 		"@fullcalendar/timegrid": "^6.1.10"
 	}
 }
